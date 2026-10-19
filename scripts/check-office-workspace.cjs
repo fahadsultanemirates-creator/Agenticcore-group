@@ -19,14 +19,16 @@ assert.throws(()=>guide.snapshot({route:'unknown'},model,packages));
 
 // Run real UI handlers with an in-memory DOM; no account or live API writes.
 class Element{
- constructor(tag){this.tag=tag;this.children=[];this.attributes={};this.style={setProperty(){}};this.value='';this.disabled=false;this.hidden=false;this.textContent=''}
- append(...children){this.children.push(...children)}
- replaceChildren(...children){this.children=[...children]}
+ constructor(tag){this.tag=tag;this.children=[];this.attributes={};this.style={setProperty(){}};this.isConnected=true;this.value='';this.disabled=false;this.hidden=false;this.textContent=''}
+ append(...children){for(const child of children)if(child instanceof Element)child.parent=this;this.children.push(...children)}
+ replaceChildren(...children){this.children=[];this.append(...children)}
+ showModal(){this.open=true}
+ remove(){if(this.parent)this.parent.children=this.parent.children.filter(e=>e!==this)}
  setAttribute(k,v){this.attributes[k]=v}
  focus(){}
 }
 const document={createElement:tag=>new Element(tag)};
-const root={OfficeModel:model,OfficeAssistantModel:guide,OwnedOfficePackages:packages,WorkspaceModel:require(path.join(dist,'workspace-model.js'))};
+const root={requestAnimationFrame:fn=>fn(),OfficeModel:model,OfficeAssistantModel:guide,OwnedOfficePackages:packages,WorkspaceModel:require(path.join(dist,'workspace-model.js'))};
 vm.runInNewContext(fs.readFileSync(path.join(dist,'office-workspace.js'),'utf8'),{window:root,document,console,crypto:require('node:crypto').webcrypto});
 const office=root.OfficeWorkspace;
 function all(el){return [el,...el.children.filter(x=>x instanceof Element).flatMap(all)]}
@@ -48,7 +50,9 @@ async function main(){
  const viewer=new Element('main');office.renderOffice(viewer,{...ctx,role:'viewer'});const viewerSave=byText(viewer,'button','Save office proposal');assert.equal(viewerSave.disabled,true);await find(viewer,e=>e.tag==='form').onsubmit(event);assert.equal(calls.length,2);
  const other=new Element('main');office.renderOffice(other,{...ctx,organization:{id:'business-b',name:'Other business'}});assert.equal(field(other,'goals').value,'');assert.equal(field(other,'officeName').value,'Other business');assert.equal(byText(other,'button','Save office proposal').disabled,true);
  const chat=new Element('main');office.renderChat(chat,ctx);await new Promise(resolve=>setImmediate(resolve));assert.equal(all(chat).filter(e=>e.attributes['aria-pressed']).length,10);
+ assert.equal(find(chat,e=>e.tag==='dialog').open,true);assert.equal(find(chat,e=>e.attributes['aria-label']==='Maya portrait').attributes.role,'img');
  const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';await chatForm.onsubmit(event);
+ assert.ok(all(chat).some(e=>e.tag==='p'&&e.textContent==='Consider marketing and finance.'));assert.equal(find(chat,e=>e.tag==='details'&&e.className==='chat-suggestion').open,undefined);
  byText(chat,'button','Review this office suggestion').onclick();assert.equal(navigations.at(-1),'office');
  const suggested=new Element('main');office.renderOffice(suggested,ctx);assert.equal(find(suggested,e=>e.value==='marketing').checked,true);assert.equal(find(suggested,e=>e.value==='finance').checked,true);
  const forgeButton=find(chat,e=>e.tag==='button'&&e.attributes['aria-label']==='Forge — available with an active package');assert.equal(forgeButton.disabled,true);
