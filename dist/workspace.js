@@ -56,8 +56,8 @@ async function initialize(){
 }
 async function load(){
  $('#workspace-content').replaceChildren(node('p','Loading business records…','empty-state'));
- const result=await Promise.all([api.membership(organization.id,user.id),api.records('office_requests',organization.id),api.records('office_projects',organization.id),api.records('office_milestones',organization.id,'position.asc',500),api.records('office_deliverables',organization.id),api.records('office_updates',organization.id)]);
- role=result[0][0]?.role;records={requests:result[1],projects:result[2],milestones:result[3],deliverables:result[4],updates:result[5]};
+ const result=await Promise.all([api.membership(organization.id,user.id),api.records('office_requests',organization.id),api.records('office_projects',organization.id),api.records('office_milestones',organization.id,'position.asc',500),api.records('office_deliverables',organization.id),api.records('office_updates',organization.id),api.packageAccess(organization.id).catch(()=>[])]);
+ role=result[0][0]?.role;records={requests:result[1],projects:result[2],milestones:result[3],deliverables:result[4],updates:result[5],packageAccess:result[6]};
  $('#business-title').textContent=organization.name;$('#account-label').textContent=user.email+' · '+(role||'Member');$('#new-request').hidden=role==='viewer';render();
 }
 function empty(text){return node('p',text,'empty-state')}
