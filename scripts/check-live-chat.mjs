@@ -14,12 +14,16 @@ function setup({reserve={id,reused:false,history:[],business:'Example',projects:
 }
 const request=(p=payload,headers={})=>new Request('https://agenticcore.group/api/office-chat',{method:'POST',headers:{Authorization:'Bearer user-session','Content-Type':'application/json',...headers},body:JSON.stringify(p)});
 {
- const s=setup();const r=await s.handler(new Request('https://agenticcore.group/api/office-chat'));assert.equal(r.status,200);const body=await r.text();assert.ok(!body.includes('server-api-secret'));assert.match(body,/configured/);
+ const s=setup();const r=await s.handler(new Request('https://agenticcore.group/api/office-chat'));assert.equal(r.status,200);const body=await r.text();assert.ok(!body.includes('server-api-secret'));assert.match(body,/configured/);assert.equal(JSON.parse(body).apiKeyConfigured,true);assert.equal(JSON.parse(body).storageTokenConfigured,true);
  assert.equal((await s.handler(request(payload,{Authorization:''}))).status,401);assert.equal(s.count(),0);
  assert.equal((await s.handler(request(payload,{Origin:'https://other.example'}))).status,403);
  assert.equal((await s.handler(request({...payload,character:'unknown'}))).status,400);
  assert.equal((await s.handler(request({...payload,text:'x'.repeat(2100)}))).status,400);
  assert.equal((await s.handler(request(null))).status,400);
+}
+{
+ const handler=createChatHandler({env:k=>k==='OPENAI_API_KEY'?'private-value':undefined,office,packages,guide,client:()=>{throw Error('not called')}});
+ const data=await (await handler(new Request('https://agenticcore.group/api/office-chat'))).json();assert.deepEqual(data,{configured:false,apiKeyConfigured:true,storageTokenConfigured:false});
 }
 for(const [status,error]of [[401,'Sign in again'],[403,'Business access required'],[403,'Active package required for Forge'],[429,'Daily chat allowance reached']]){
  const s=setup({bridgeStatus:status,reserve:{error}});assert.equal((await s.handler(request({...payload,character:'forge'}))).status,status);assert.equal(s.count(),0);
