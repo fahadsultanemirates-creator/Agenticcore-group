@@ -3,6 +3,8 @@
 const $=s=>document.querySelector(s),api=window.WorkspaceAPI,model=window.WorkspaceModel;
 let user=null,organizations=[],organization=null,role=null,tab='overview',mode='login',recovery=false;
 let records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};
+const assistantLink=new URLSearchParams(location.search||'').get('assistant');
+if(window.OfficeAssistantModel?.team.some(p=>p.id===assistantLink)){tab='team';window.OfficeWorkspace.selectAssistant(assistantLink)}
 function notice(message){
  const el=$('#notice');
  if(!$('#auth-panel').hidden)$('#auth-form').insertBefore(el,$('#auth-submit'));
@@ -32,7 +34,7 @@ $('#auth-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async(
  }catch(err){notice(err.message)}})};
 $('#forgot-password').onclick=async()=>{const input=$('#auth-form').elements.email;if(!input.reportValidity())return;const button=$('#forgot-password');button.disabled=true;try{await api.recover(input.value.trim());notice('If this email has an account, a password-reset link will be sent. Check your inbox.')}catch(e){notice(e.message)}finally{button.disabled=false}};
 $('#reset-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async()=>{try{await api.updatePassword(e.target.elements.password.value);e.target.reset();recovery=false;await api.logout();user=null;show('auth-panel');notice('Password updated. Sign in with your new password.')}catch(err){notice(err.message)}})};
-$('#sign-out').onclick=async()=>{try{await api.logout()}catch{}finally{user=null;organizations=[];organization=null;records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};$('#workspace-content').replaceChildren();$('#request-dialog').close();show('auth-panel');notice('You are signed out.')}};
+$('#sign-out').onclick=async()=>{try{await api.logout()}catch{}finally{window.OfficeWorkspace?.reset();tab='overview';user=null;organizations=[];organization=null;records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};$('#workspace-content').replaceChildren();$('#request-dialog').close();show('auth-panel');notice('You are signed out.')}};
 $('#setup-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async()=>{try{notice('');await api.onboard(e.target.elements.name.value.trim());await initialize()}catch(err){notice(err.message)}})};
 $('#business-switch').onchange=async e=>{organization=organizations.find(o=>o.id===e.target.value);try{await load()}catch(err){notice(err.message)}};
 $('#refresh').onclick=async()=>{const b=$('#refresh');b.disabled=true;try{await load();notice('Workspace refreshed.')}catch(e){notice(e.message)}finally{b.disabled=false}};
@@ -77,10 +79,17 @@ function render(){
  const content=$('#workspace-content');content.replaceChildren();
  document.querySelectorAll('[data-tab]').forEach(b=>{if(b.dataset.tab===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  if(tab==='requests')return renderRequests(content);if(tab==='projects')return renderProjects(content);if(tab==='deliverables')return renderDeliverables(content);
- if(tab==='office'){const grid=node('div',undefined,'workspace-grid');const a=card('Your business workspace');a.append(node('p',organization.name),node('p','Access: '+role),node('p','Coordinator role: Maya. Your requests are saved here for review; this account does not itself activate a managed office package.'));const b=card('Package and payments');b.append(node('p','No active package or payment records are connected to this workspace yet. A saved brief is a request, not a paid subscription.'),node('p','WhatsApp, Telegram and email update preferences remain part of the brief until those delivery channels are connected.'));grid.append(a,b);content.append(grid);return}
+ if(tab==='office'||tab==='team'){
+  const orgId=organization.id;
+  const context={organization,role,records,notice,navigate(value){tab=value;render()},
+   save(route,brief){if(organization.id!==orgId)return Promise.reject(new Error('Your business changed. Review the proposal again.'));return api.saveRequest(orgId,route,brief)},
+   async saved(){if(organization.id!==orgId)return;await load();notice('Office proposal saved for scope review. No payment or service has been activated.')}};
+  return window.OfficeWorkspace[tab==='office'?'renderOffice':'renderChat'](content,context);
+ }
+
  const sums=model.summary(records.requests,records.projects);const stats=node('div',undefined,'stat-grid');[['Open requests',sums.requests],['Active projects',sums.active],['Awaiting approval',sums.approvals]].forEach(([label,n])=>{const stat=node('article',undefined,'workspace-stat');stat.append(node('span',label),node('strong',String(n)));stats.append(stat)});content.append(stats);
  const grid=node('div',undefined,'workspace-grid');const next=card('Your next step');next.append(node('p',records.requests.length?'Use Requests to review your submitted briefs, and Projects for accepted work and milestones.':'Describe the first result you need. We will confirm scope before any work starts.'));const button=node('button','View requests ↗','link');button.onclick=()=>{tab='requests';render()};next.append(button);
- const updates=card('Office updates');if(!records.updates.length)updates.append(empty('No office updates yet. Confirmed progress and requests for information will appear here.'));records.updates.slice(0,10).forEach(u=>{updates.append(node('h3',u.title),node('p',u.body),node('p',date(u.created_at),'record-date'))});grid.append(next,updates);content.append(grid,node('p','Showing up to the latest 200 records per section. Refresh to retrieve current status.','fine'));
+ const updates=card('Office updates');if(!records.updates.length)updates.append(empty('No office updates yet. Confirmed progress and requests for information will appear here.'));records.updates.slice(0,10).forEach(u=>{updates.append(node('h3',u.title),node('p',u.body),node('p',date(u.created_at),'record-date'))});grid.append(next,updates);const welcome=card('Shape your office with your team');welcome.append(node('p','Choose departments and work allowances in My office, or let Amara guide your setup. Maya is your everyday coordinator.'));const configure=node('button','Design my office ↗','dark');configure.type='button';configure.onclick=()=>{tab='office';render()};const chat=node('button','Talk to Maya ↗','outline');chat.type='button';chat.onclick=()=>{window.OfficeWorkspace.selectAssistant('maya');tab='team';render()};welcome.append(configure,chat);content.append(welcome);content.append(grid,node('p','Showing up to the latest 200 records per section. Refresh to retrieve current status.','fine'));
 }
 (async()=>{try{recovery=await api.callback();if(api.hasSession())await initialize();else show('auth-panel')}catch(e){show('auth-panel');notice(e.message)}})();
 })();
