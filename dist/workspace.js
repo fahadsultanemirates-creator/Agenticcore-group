@@ -3,16 +3,30 @@
 const $=s=>document.querySelector(s),api=window.WorkspaceAPI,model=window.WorkspaceModel;
 let user=null,organizations=[],organization=null,role=null,tab='overview',mode='login',recovery=false;
 let records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};
-function notice(message){$('#notice').textContent=message||'';$('#notice').hidden=!message}
+function notice(message){
+ const el=$('#notice');
+ if(!$('#auth-panel').hidden)$('#auth-form').insertBefore(el,$('#auth-submit'));
+ else $('#workspace-main').prepend(el);
+ el.textContent=message||'';el.hidden=!message;
+}
 function show(panel){['auth-panel','reset-panel','setup-panel','dashboard','loading-panel'].forEach(id=>$('#'+id).hidden=id!==panel);$('#sign-out').hidden=!user}
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
 function date(value){if(!value)return 'Not set';const d=new Date(value.length===10?value+'T12:00:00':value);return Number.isNaN(d.getTime())?'Not set':d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}
-async function busy(form,work){const b=form.querySelector('button[type=submit]');b.disabled=true;try{await work()}finally{b.disabled=false}}
+async function busy(form,work){
+ const b=form.querySelector('button[type=submit]');if(b.disabled)return;
+ b.disabled=true;form.setAttribute('aria-busy','true');
+ const auth=form.id==='auth-form';
+ if(auth){$('#login-tab').disabled=true;$('#signup-tab').disabled=true;b.textContent=mode==='signup'?'Creating account…':'Signing in…'}
+ try{await work()}finally{
+ b.disabled=false;form.removeAttribute('aria-busy');
+ if(auth){$('#login-tab').disabled=false;$('#signup-tab').disabled=false;b.textContent=mode==='login'?'Sign in':'Create account'}
+ }
+}
 function setMode(value){mode=value;$('#auth-heading').textContent=value==='login'?'Welcome back.':'Start your workspace.';$('#auth-submit').textContent=value==='login'?'Sign in':'Create account';$('#signup-note').hidden=value!=='signup';$('#login-tab').setAttribute('aria-pressed',value==='login');$('#signup-tab').setAttribute('aria-pressed',value==='signup');$('#auth-form').elements.password.autocomplete=value==='login'?'current-password':'new-password';notice('')}
 $('#login-tab').onclick=()=>setMode('login');$('#signup-tab').onclick=()=>setMode('signup');
 $('#auth-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async()=>{try{
  const email=e.target.elements.email.value.trim(),password=e.target.elements.password.value;notice('');
- if(mode==='signup'){await api.signup(email,password);e.target.elements.password.value='';if(!api.hasSession()){notice('Check your email to confirm your account, then return here to sign in.');return}}
+ if(mode==='signup'){await api.signup(email,password);e.target.elements.password.value='';if(!api.hasSession()){setMode('login');notice('Check your inbox and spam folder for the confirmation email. Confirm your email, then sign in below. Do not create the account again.');return}}
  else await api.login(email,password);
  e.target.elements.password.value='';await initialize();
  }catch(err){notice(err.message)}})};
