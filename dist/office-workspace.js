@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const model=root.OfficeModel,guide=root.OfficeAssistantModel,packages=root.OwnedOfficePackages;
-let business=null,draft=null,character='maya',messages=[],context,conversationBrief='',requestedAssistant=null,viewVersion=0;
+let business=null,draft=null,character='maya',messages=[],context,conversationBrief='',requestedAssistant=null,viewVersion=0,cleanupChat=()=>{};
 function initial(){return {route:'managed',departments:[],level:'essential',packageId:'starter',officeName:'',characterName:'',characterStyle:'To be chosen',goals:''}}
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
 function button(text,work,cls='outline'){const b=node('button',text,cls);b.type='button';b.onclick=work;return b}
@@ -10,7 +10,7 @@ function bind(ctx){context=ctx;if(business!==ctx.organization.id){business=ctx.o
 function openChat(id){if(guide.team.some(p=>p.id===id)){character=id;messages=[]}context.navigate('team')}
 function labelInput(form,text,name,value,max=120){const label=node('label',text);const input=node('input');input.name=name;input.value=value;input.maxLength=max;input.oninput=()=>draft[name]=input.value;label.append(input);form.append(label);return input}
 function renderOffice(target,ctx){
- ++viewVersion;bind(ctx);
+ cleanupChat();++viewVersion;bind(ctx);
  title(target,'AMARA / DESIGN YOUR OFFICE','Build an office around your work.','Select the support you need, review the allowance and save a proposal to your business. Maya stays your everyday contact.');
  const intro=node('div',undefined,'office-toolbar');intro.append(button('Ask Amara to help ↗',()=>openChat('amara')),button('Talk to Maya ↗',()=>openChat('maya')));target.append(intro);
  const previous=(ctx.records.requests||[]).filter(r=>r.brief?.kind==='office_configuration');
@@ -55,7 +55,7 @@ function renderOffice(target,ctx){
  };
 }
 function renderChat(target,ctx){
- const view=++viewVersion;bind(ctx);
+ cleanupChat();const view=++viewVersion;bind(ctx);
  const forgeAllowed=(ctx.records.packageAccess||[]).some(row=>row.organization_id===ctx.organization.id&&Date.parse(row.ends_at)>Date.now());
  if(character==='forge'&&!forgeAllowed){character='maya';messages=[];conversationBrief=''}
  const dialog=node('dialog',undefined,'office-chat-window');dialog.setAttribute('aria-label','Office character conversation');dialog.oncancel=e=>{e.preventDefault();ctx.navigate('overview')};
@@ -74,7 +74,29 @@ function renderChat(target,ctx){
  function suggestionCard(description,apply,parent){const card=node('details',undefined,'chat-suggestion');card.append(node('summary','Suggested office — optional'),node('p',description),button('Review this office suggestion',apply));(parent||log).append(card);return card}
  function showSuggestion(ids){const m=bubble(person.name,'You can explore these departments in your office builder.','assistant');suggestionCard(ids.map(id=>model.departments.find(d=>d.id===id).name).join(', '),()=>{draft.route='managed';draft.departments=[...ids];context.navigate('office')},m);log.scrollTop=m.offsetTop-log.offsetTop}
  function showOfficeSuggestion(s,parent){if(!s||s.route==='none')return;const chosen=(s.departments||[]).filter(id=>model.departments.some(d=>d.id===id));suggestionCard(s.route==='owned'?'A company-owned office build. Review its scope and milestone estimate.':'Suggested departments: '+chosen.map(id=>model.departments.find(d=>d.id===id).name).join(', '),()=>{draft.route=s.route;draft.departments=chosen;if(model.levels.some(l=>l.id===s.level))draft.level=s.level;if(packages.some(p=>p.id===s.packageId))draft.packageId=s.packageId;if(s.goals)draft.goals=s.goals.slice(0,4000);context.navigate('office')},parent)}
- const form=node('form',undefined,'office-chat-compose');const label=node('label','Your message');const input=node('textarea');input.rows=2;input.maxLength=2000;input.required=true;input.placeholder='For example: I need social posts and bookkeeping support.';label.append(input);const send=node('button','Send message','dark');send.type='submit';form.append(label,send);
+ const form=node('form',undefined,'office-chat-compose');const previews=node('div',undefined,'composer-attachments');previews.setAttribute('aria-label','Selected attachments');
+ const label=node('label','Message '+person.name,'composer-label');const input=node('textarea');input.rows=1;input.maxLength=2000;input.setAttribute('aria-label','Message '+person.name);input.placeholder='Message '+person.name+'…';label.append(input);
+ const footer=node('div',undefined,'composer-controls');const attach=button('',()=>picker.click(),'attach-button');attach.setAttribute('aria-label','Attach files');attach.title='Attach PDF, Word, text or images';attach.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m21 11-9 9a6 6 0 0 1-8.5-8.5l10-10a4 4 0 0 1 5.7 5.7L9 17.4a2 2 0 0 1-2.8-2.8L16 4.8"/></svg>';
+ const picker=node('input');picker.type='file';picker.multiple=true;picker.accept='.pdf,.docx,.txt,.jpg,.jpeg,.png,.webp';picker.hidden=true;picker.setAttribute('aria-label','Choose attachments');
+ const hint=node('span','PDF, Word, text & images · 4 MB each','composer-hint');const send=node('button',undefined,'composer-send');send.type='submit';send.setAttribute('aria-label','Send message');send.title='Send message';
+ const sendIcon=()=>{send.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>'};sendIcon();footer.append(attach,hint,send);form.append(previews,label,footer,picker);
+ let files=[];
+ cleanupChat=()=>{files.forEach(f=>{if(f.preview)URL.revokeObjectURL(f.preview)});files=[]};
+ function refreshComposer(){send.disabled=!historyReady||sending||files.some(f=>f.state!=='ready')||(!input.value.trim()&&!files.length);attach.disabled=sending||files.length>=3;previews.replaceChildren();files.forEach(f=>{const chip=node('div',undefined,'attachment-preview');if(f.preview){const img=node('img');img.src=f.preview;img.alt=f.name;chip.append(img)}const copy=node('span');copy.append(node('strong',f.name),node('small',f.state==='ready'?'Ready to send':f.state==='uploading'?'Uploading…':f.error||'Upload failed'));const remove=button('×',()=>{if(sending)return;files=files.filter(x=>x!==f);if(f.preview)URL.revokeObjectURL(f.preview);refreshComposer()},'remove-attachment');remove.setAttribute('aria-label','Remove '+f.name);remove.title='Remove from this message';remove.disabled=sending;chip.append(copy,remove);previews.append(chip)})}
+ input.oninput=()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,160)+'px';refreshComposer()};
+ input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!send.disabled)form.requestSubmit()}};
+ picker.onchange=async()=>{
+  const selected=[...picker.files];picker.value='';
+  for(const file of selected){
+   if(files.length>=3){remaining.textContent='You can attach up to three files per message.';break}
+   if(!/\.(pdf|docx|txt|jpe?g|png|webp)$/i.test(file.name)||file.size<1||file.size>4194304){remaining.textContent='Use PDF, DOCX, TXT, JPG, PNG or WebP files up to 4 MB each.';continue}
+   const f={name:file.name,state:'uploading',preview:file.type.startsWith('image/')?URL.createObjectURL(file):null};files.push(f);refreshComposer();
+   try{const uploaded=await ctx.upload(file);if(view!==viewVersion)return;Object.assign(f,uploaded,{state:'ready'});remaining.textContent='Attachment ready. Add a message or press Send.'}
+   catch(e){if(view!==viewVersion)return;f.state='failed';f.error=e.message;remaining.textContent='Remove the failed attachment and try again.'}
+   refreshComposer();
+  }
+ };
+ function fileCards(list,parent){if(!list?.length)return;const cards=node('div',undefined,'message-attachments');list.forEach(f=>{const download=button('📎 '+f.name,async()=>{download.disabled=true;try{const url=await ctx.download(f.id);if(view!==viewVersion)return;const a=node('a');a.href=url+'&download='+encodeURIComponent(f.name);a.download=f.name;a.click()}catch(e){remaining.textContent=e.message}finally{download.disabled=false}},'message-attachment');download.setAttribute('aria-label','Download '+f.name);cards.append(download)});parent.append(cards)}
  const useBrief=button('Use my messages as an office brief',()=>{draft.goals=conversationBrief.slice(0,4000);context.navigate('office')});useBrief.disabled=!conversationBrief;
  const remaining=node('p','Loading your saved conversation…','fine');remaining.setAttribute('role','status');
  const reload=button('Refresh conversation',()=>{target.replaceChildren();renderChat(target,ctx)});actions.append(reload);
@@ -83,20 +105,20 @@ function renderChat(target,ctx){
  async function history(){
   try{const rows=await ctx.history(person.id);if(view!==viewVersion)return;
    messages=[];conversationBrief='';log.replaceChildren();bubble(person.name,person.intro,'assistant');
-   [...rows].reverse().forEach(row=>{messages.push({who:'client',text:row.user_text});bubble('You',row.user_text,'client');conversationBrief=(conversationBrief+'\n'+row.user_text).slice(-4000);if(row.state==='complete'&&row.reply){messages.push({who:'assistant',text:row.reply});const savedReply=bubble(person.name,row.reply,'assistant');showOfficeSuggestion(row.suggestion,savedReply)}else bubble('Message status',row.state==='pending'?'This message has no completed reply yet. Refresh shortly; if it stays pending, send a new message.':'This message did not complete. You can send it again.','status')});
-   useBrief.disabled=!conversationBrief;historyReady=true;send.disabled=false;remaining.textContent='Your latest 30 messages with this character are shown. AI can make mistakes; review proposals before saving.';log.scrollTop=log.scrollHeight;
+   [...rows].reverse().forEach(row=>{messages.push({who:'client',text:row.user_text});const userMessage=bubble('You',row.user_text,'client');fileCards(row.office_chat_files,userMessage);conversationBrief=(conversationBrief+'\n'+row.user_text).slice(-4000);if(row.state==='complete'&&row.reply){messages.push({who:'assistant',text:row.reply});const savedReply=bubble(person.name,row.reply,'assistant');showOfficeSuggestion(row.suggestion,savedReply)}else bubble('Message status',row.state==='pending'?'This message has no completed reply yet. Refresh shortly; if it stays pending, send a new message.':'This message did not complete. You can send it again.','status')});
+   useBrief.disabled=!conversationBrief;historyReady=true;refreshComposer();remaining.textContent='Your latest 30 messages with this character are shown. AI can make mistakes; review proposals before saving.';log.scrollTop=log.scrollHeight;
   }catch(e){if(view!==viewVersion)return;remaining.textContent=e.message+' Use Refresh conversation to try again.'}
  }
  form.onsubmit=async e=>{e.preventDefault();if(sending||!historyReady)return;
-  const text=input.value.trim();if(!text)return;
-  sending=true;send.disabled=true;input.disabled=true;send.textContent='Thinking…';remaining.textContent='Preparing your reply…';bubble('You',text,'client');const waiting=bubble(person.name,'Thinking…','chat-waiting');log.scrollTop=log.scrollHeight;
-  try{const answer=await ctx.chat(person.id,text,crypto.randomUUID());if(view!==viewVersion)return;
-   messages.push({who:'client',text},{who:'assistant',text:answer.reply});waiting.remove();const reply=bubble(person.name,answer.reply,'assistant');conversationBrief=(conversationBrief+'\n'+text).slice(-4000);useBrief.disabled=false;input.value='';showOfficeSuggestion(answer.suggestion,reply);log.scrollTop=Math.max(0,reply.offsetTop-log.offsetTop-12);remaining.textContent='Conversation saved. Review any suggested office in the builder.';
+  const text=input.value.trim()||(files.length?'Please review the attached file'+(files.length===1?'':'s')+'.':'');if(!text||files.some(f=>f.state!=='ready'))return;
+  sending=true;refreshComposer();input.disabled=true;send.textContent='…';remaining.textContent='Preparing your reply…';const userMessage=bubble('You',text,'client');fileCards(files,userMessage);const waiting=bubble(person.name,'Thinking…','chat-waiting');log.scrollTop=log.scrollHeight;
+  try{const answer=await ctx.chat(person.id,text,crypto.randomUUID(),files.map(f=>f.id));if(view!==viewVersion)return;
+   messages.push({who:'client',text},{who:'assistant',text:answer.reply});waiting.remove();const reply=bubble(person.name,answer.reply,'assistant');conversationBrief=(conversationBrief+'\n'+text).slice(-4000);useBrief.disabled=false;input.value='';input.style.height='auto';cleanupChat();refreshComposer();showOfficeSuggestion(answer.suggestion,reply);log.scrollTop=Math.max(0,reply.offsetTop-log.offsetTop-12);remaining.textContent='Conversation saved. Review any suggested office in the builder.';
   }catch(e){if(view!==viewVersion)return;waiting.textContent='Reply unavailable. '+e.message;remaining.textContent=e.message+' Your text is still in the message box. Refresh the conversation before retrying if the connection was interrupted.'}
-  finally{if(view===viewVersion){sending=false;send.disabled=false;input.disabled=false;send.textContent='Send message'}}
+  finally{if(view===viewVersion){sending=false;input.disabled=false;sendIcon();refreshComposer()}}
  };
  history();
- const tools=node('details',undefined,'chat-tools');tools.append(node('summary','Office & project actions'),actions,useBrief);panel.append(privacy,log,remaining,form,tools);layout.append(roster,panel);dialog.append(header,layout);target.append(dialog);root.requestAnimationFrame(()=>{if(view===viewVersion&&dialog.isConnected)dialog.showModal()});
+ const tools=node('details',undefined,'chat-tools');tools.append(node('summary','Office & project actions'),actions,useBrief);panel.append(privacy,log,tools,remaining,form);layout.append(roster,panel);dialog.append(header,layout);target.append(dialog);root.requestAnimationFrame(()=>{if(view===viewVersion&&dialog.isConnected)dialog.showModal()});
 }
-root.OfficeWorkspace={renderOffice,renderChat,reset(){++viewVersion;business=null;draft=null;messages=[];conversationBrief='';character='maya';requestedAssistant=null},selectAssistant(id){if(guide.team.some(p=>p.id===id)){character=id;requestedAssistant=id;messages=[];conversationBrief=''}}};
+root.OfficeWorkspace={renderOffice,renderChat,reset(){cleanupChat();++viewVersion;business=null;draft=null;messages=[];conversationBrief='';character='maya';requestedAssistant=null},selectAssistant(id){if(guide.team.some(p=>p.id===id)){character=id;requestedAssistant=id;messages=[];conversationBrief=''}}};
 })(window);

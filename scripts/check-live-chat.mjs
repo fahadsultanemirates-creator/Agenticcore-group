@@ -7,9 +7,9 @@ const organization='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',id='55555555-5555-4555
 const suggestion={route:'managed',departments:['marketing'],level:'essential',packageId:'starter',goals:'Prepare social posts'};
 const payload={organization,id,character:'maya',text:'Help with social posts'};
 const env=k=>({OPENAI_API_KEY:'server-api-secret',OFFICE_CHAT_SERVER_TOKEN:'server-bridge-secret'}[k]);
-function setup({reserve={id,reused:false,history:[],business:'Example',projects:[],requests:[]},bridgeStatus=200,providerError=false,finishStatus=200,output={reply:'Let’s plan your marketing department.',suggestion}}={}){
+function setup({fileBytes=null,reserve={id,reused:false,history:[],business:'Example',projects:[],requests:[]},bridgeStatus=200,providerError=false,finishStatus=200,output={reply:'Let’s plan your marketing department.',suggestion}}={}){
  const calls=[];let providerCalls=0,providerArgs;
- const handler=createChatHandler({env,office,packages,guide,fetcher:async(url,options)=>{const body=JSON.parse(options.body);calls.push(body);assert.equal(options.headers['x-office-chat-server-token'],'server-bridge-secret');return Response.json(body.operation==='reserve'?reserve:finishStatus!==200?{error:'Active package required for Forge'}:{saved:true},{status:body.operation==='reserve'?bridgeStatus:body.operation==='finish'?finishStatus:200})},client:()=>({responses:{create:async args=>{providerCalls++;providerArgs=args;if(providerError)throw Object.assign(Error('secret provider details: server-api-secret'),{status:401});return {status:'completed',model:'gpt-5-mini',output_text:JSON.stringify(output),usage:{input_tokens:100,output_tokens:50}}}}})});
+ const handler=createChatHandler({env,office,packages,guide,fetcher:async(url,options)=>{if(options?.method!=='POST')return new Response(fileBytes);const body=JSON.parse(options.body);calls.push(body);assert.equal(options.headers['x-office-chat-server-token'],'server-bridge-secret');return Response.json(body.operation==='reserve'?reserve:finishStatus!==200?{error:'Active package required for Forge'}:{saved:true},{status:body.operation==='reserve'?bridgeStatus:body.operation==='finish'?finishStatus:200})},client:()=>({responses:{create:async args=>{providerCalls++;providerArgs=args;if(providerError)throw Object.assign(Error('secret provider details: server-api-secret'),{status:401});return {status:'completed',model:'gpt-5-mini',output_text:JSON.stringify(output),usage:{input_tokens:100,output_tokens:50}}}}})});
  return {handler,calls,count:()=>providerCalls,args:()=>providerArgs};
 }
 const request=(p=payload,headers={})=>new Request('https://agenticcore.group/api/office-chat',{method:'POST',headers:{Authorization:'Bearer user-session','Content-Type':'application/json',...headers},body:JSON.stringify(p)});
@@ -45,5 +45,12 @@ for(const [status,error]of [[401,'Sign in again'],[403,'Business access required
 }
 {
  const s=setup({output:{reply:'Something',suggestion:{...suggestion,departments:['invented']}}});assert.equal((await s.handler(request())).status,503);assert.equal(s.calls.at(-1).operation,'fail');
+}
+{
+ const bytes=Buffer.from('Business facts supplied by client');
+ const file={id:'77777777-7777-4777-8777-777777777777',name:'notes.txt',mime:'text/plain',size:bytes.length,url:'https://pdaluprahifdejsjwjoi.supabase.co/storage/v1/object/sign/office-chat-files/path?token=short-lived'};
+ const s=setup({fileBytes:bytes,reserve:{id,reused:false,history:[],business:'Example',projects:[],requests:[],files:[file]}});
+ assert.equal((await s.handler(request({...payload,files:[file.id]}))).status,200);
+ const input=s.args().input.at(-1).content;assert.equal(input[0].type,'input_text');assert.match(input[1].text,/Business facts supplied by client/);assert.ok(!JSON.stringify(s.args()).includes('token=short-lived'));
 }
 console.log('Live chat checks passed: authentication and package denials, limits, validated suggestions, persistence, safe errors, replay protection and access revocation before reply release.');

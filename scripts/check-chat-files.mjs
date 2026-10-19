@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {createFileHandler,fileContent} from '../netlify/lib/chat-files.mjs';
+const organization='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',id='77777777-7777-4777-8777-777777777777';
+const env=()=> 'server-only-secret';let calls=0,last;
+const handler=createFileHandler({env,fetcher:async(url,options)=>{calls++;last=JSON.parse(options.body);return Response.json({id,name:'notes.txt',uploadUrl:'https://pdaluprahifdejsjwjoi.supabase.co/storage/v1/object/upload/sign/office-chat-files/path?token=short-lived'})}});
+const request=(extra={},headers={})=>new Request('https://agenticcore.group/api/office-chat-file',{method:'POST',headers:{Authorization:'Bearer user-session','Content-Type':'application/json',...headers},body:JSON.stringify({organization,id,action:'init',name:'notes.txt',mime:'text/plain',size:20,...extra})});
+assert.equal((await handler(request())).status,200);assert.equal(last.operation,'file-init');
+assert.equal((await handler(request({action:'download'}))).status,200);assert.equal(last.operation,'file-download');
+const before=calls;
+assert.equal((await handler(request({}, {Authorization:''}))).status,401);
+assert.equal((await handler(request({}, {Origin:'https://other.example'}))).status,403);
+assert.equal((await handler(request({name:'run.exe'}))).status,400);
+assert.equal((await handler(request({size:4194305}))).status,400);
+assert.equal((await handler(request({name:'wrong.pdf',mime:'image/png'}))).status,400);
+assert.equal(calls,before);
+const forbidden=createFileHandler({env,fetcher:async()=>Response.json({error:'Attachment access required'},{status:403})});assert.equal((await forbidden(request({action:'download'}))).status,403);
+const base='https://pdaluprahifdejsjwjoi.supabase.co/storage/v1/object/sign/office-chat-files/';
+async function content(name,mime,bytes){return fileContent({url:base+'file?token=signed',name,mime,size:bytes.length},async()=>new Response(bytes))}
+assert.equal((await content('notes.txt','text/plain',Buffer.from('Source facts'))).type,'input_text');
+assert.equal((await content('brief.pdf','application/pdf',Buffer.from('%PDF-1.4\nTest'))).type,'input_file');
+assert.equal((await content('photo.jpg','image/jpeg',Buffer.from('ffd8ff001122','hex'))).type,'input_image');
+assert.equal((await content('draft.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document',Buffer.from('504b03040102','hex'))).type,'input_file');
+await assert.rejects(()=>content('fake.pdf','application/pdf',Buffer.from('Executable content')),/Invalid PDF/);
+await assert.rejects(()=>fileContent({url:'https://external.example/private',mime:'text/plain',size:1},()=>{throw Error('must not fetch')}),/Invalid file URL/);
+await assert.rejects(()=>fileContent({url:base+'file',mime:'text/plain',size:100},async()=>new Response('abc')),/size mismatch/);
+assert.match((await content('long.txt','text/plain',Buffer.from('a'.repeat(17000)))).text,/Only the first 16,000/);
+console.log('Attachment checks passed: login/origin, size/type validation, private download denial, allowed-source retrieval, file signatures and AI input formats.');
