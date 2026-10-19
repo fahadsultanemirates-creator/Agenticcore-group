@@ -4,7 +4,7 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function createChatHandler({env,office,packages,guide,client,fetcher=fetch}){
  return async req=>{
   const response=(status,data)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-  if(req.method==='GET')return response(200,{configured:!!env('OPENAI_API_KEY')&&!!env('OFFICE_CHAT_SERVER_TOKEN')});
+  if(req.method==='GET'){const apiKeyConfigured=!!env('OPENAI_API_KEY'),storageTokenConfigured=!!env('OFFICE_CHAT_SERVER_TOKEN');return response(200,{configured:apiKeyConfigured&&storageTokenConfigured,apiKeyConfigured,storageTokenConfigured})}
   if(req.method!=='POST')return response(405,{error:'Use POST'});
   const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)return response(403,{error:'Origin not allowed'});
   const auth=req.headers.get('authorization')||'';if(!/^Bearer [^\s]+$/.test(auth))return response(401,{error:'Sign in first'});
