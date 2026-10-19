@@ -17,3 +17,5 @@
 .office-faq details p{max-width:760px;line-height:1.85;color:var(--muted);margin:16px 0 4px}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--orange);outline-offset:4px}
 @media(max-width:600px){.office-faq summary{font-size:17px}.route-table th,.route-table td{padding:14px}.preview-note span{line-height:1.5}}
+
+#office-summary li small{display:block;color:var(--muted);font-size:13px;line-height:1.65;margin-top:6px}
