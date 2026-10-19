@@ -1,0 +1,58 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const dist=path.join(__dirname,'../dist');
+const model=require(path.join(dist,'office-model.js')),packages=require(path.join(dist,'owned-office-model.js')),guide=require(path.join(dist,'office-assistant-model.js'));
+assert.equal(guide.team.length,10);assert.equal(new Set(guide.team.map(p=>p.id)).size,10);
+assert.deepEqual(guide.recommend('Social posts and bookkeeping'),['marketing','finance']);
+assert.deepEqual(guide.recommend('I have a bakery'),[]);
+assert.deepEqual(guide.reply('status',guide.team[1],{requests:[{}],projects:[]},model).ids,[]);
+assert.match(guide.reply('status',guide.team[1],{requests:[{}],projects:[]},model).text,/1 request\(s\) and 0 project/);
+for(let mask=1;mask<128;mask++)for(const level of model.levels){
+ const departments=model.departments.filter((_,i)=>mask&(1<<i)).map(d=>d.id);
+ const s=guide.snapshot({route:'managed',departments,level:level.id},model,packages);
+ assert.equal(s.total,model.calculate(departments,level.id).total);assert.equal(s.installment*4,s.total);
+ assert.equal(s.allowances.length,departments.length);assert.match(guide.describe(s,model),/Awaiting scope confirmation/);
+}
+for(const p of packages){const s=guide.snapshot({route:'owned',packageId:p.id},model,packages);assert.equal(s.total,p.price);assert.equal(s.installment,p.price/4);assert.match(guide.describe(s,model),/Ongoing API/)}
+assert.throws(()=>guide.snapshot({route:'managed',departments:[],level:'essential'},model,packages),/at least one/);
+assert.throws(()=>guide.snapshot({route:'owned',packageId:'unknown'},model,packages),/Choose an office build/);
+assert.throws(()=>guide.snapshot({route:'unknown'},model,packages));
+
+// Run real UI handlers with an in-memory DOM; no account or live API writes.
+class Element{
+ constructor(tag){this.tag=tag;this.children=[];this.attributes={};this.style={setProperty(){}};this.value='';this.disabled=false;this.hidden=false;this.textContent=''}
+ append(...children){this.children.push(...children)}
+ replaceChildren(...children){this.children=[...children]}
+ setAttribute(k,v){this.attributes[k]=v}
+ focus(){}
+}
+const document={createElement:tag=>new Element(tag)};
+const root={OfficeModel:model,OfficeAssistantModel:guide,OwnedOfficePackages:packages,WorkspaceModel:require(path.join(dist,'workspace-model.js'))};
+vm.runInNewContext(fs.readFileSync(path.join(dist,'office-workspace.js'),'utf8'),{window:root,document,console});
+const office=root.OfficeWorkspace;
+function all(el){return [el,...el.children.filter(x=>x instanceof Element).flatMap(all)]}
+function find(el,predicate){const match=all(el).find(predicate);assert.ok(match,'Expected element');return match}
+function byText(el,tag,text){return find(el,e=>e.tag===tag&&e.textContent===text)}
+function field(el,name){return find(el,e=>e.name===name)}
+let calls=[],navigations=[],refreshes=0,release;
+const ctx={organization:{id:'business-a',name:'Example business'},role:'owner',records:{requests:[],projects:[]},notice(){},navigate:tab=>navigations.push(tab),save:async(route,brief)=>{calls.push({route,brief});await new Promise(r=>release=r)},saved:async()=>refreshes++};
+async function main(){
+ const target=new Element('main');office.renderOffice(target,ctx);
+ const save=byText(target,'button','Save office proposal');assert.equal(save.disabled,true);
+ const checkbox=find(target,e=>e.tag==='input'&&e.value==='marketing');checkbox.checked=true;checkbox.onchange();assert.equal(save.disabled,false);
+ field(target,'goals').value='Prepare launch posts';field(target,'goals').oninput();
+ const form=find(target,e=>e.tag==='form');const event={preventDefault(){}};
+ const pending=form.onsubmit(event);checkbox.onchange();await form.onsubmit(event);assert.equal(calls.length,1);assert.equal(save.disabled,true);
+ assert.equal(calls[0].brief.kind,'office_configuration');assert.equal(calls[0].brief.configuration.total,200);assert.equal(calls[0].brief.configuration.goals,'Prepare launch posts');
+ release();await pending;assert.equal(refreshes,1);
+ const owned=field(target,'route');owned.value='owned';owned.onchange();const ownedSave=form.onsubmit(event);assert.equal(calls[1].route,'owned');assert.equal(calls[1].brief.configuration.total,1500);release();await ownedSave;
+ const viewer=new Element('main');office.renderOffice(viewer,{...ctx,role:'viewer'});const viewerSave=byText(viewer,'button','Save office proposal');assert.equal(viewerSave.disabled,true);await find(viewer,e=>e.tag==='form').onsubmit(event);assert.equal(calls.length,2);
+ const other=new Element('main');office.renderOffice(other,{...ctx,organization:{id:'business-b',name:'Other business'}});assert.equal(field(other,'goals').value,'');assert.equal(field(other,'officeName').value,'Other business');assert.equal(byText(other,'button','Save office proposal').disabled,true);
+ const chat=new Element('main');office.renderChat(chat,ctx);assert.equal(all(chat).filter(e=>e.attributes['aria-pressed']).length,10);
+ const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';chatForm.onsubmit(event);
+ byText(chat,'button','Use these departments in my builder').onclick();assert.equal(navigations.at(-1),'office');
+ const suggested=new Element('main');office.renderOffice(suggested,ctx);assert.equal(find(suggested,e=>e.value==='marketing').checked,true);assert.equal(find(suggested,e=>e.value==='finance').checked,true);
+ office.selectAssistant('amara');const amara=new Element('main');office.renderChat(amara,ctx);assert.ok(all(amara).some(e=>e.tag==='h3'&&e.textContent.startsWith('Amara /')));
+ office.reset();const afterLogout=new Element('main');office.renderOffice(afterLogout,ctx);assert.equal(field(afterLogout,'goals').value,'');assert.equal(byText(afterLogout,'button','Save office proposal').disabled,true);
+ console.log('Office workspace checks passed: shared pricing for 381 managed selections and 4 builds; duplicate-save guard, viewer access, business isolation, ten assistants and chat-to-builder handoff.');
+}
+main().catch(e=>{console.error(e);process.exit(1)});

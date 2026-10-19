@@ -35,7 +35,7 @@ async function main(){
  const form=element('auth-form');form.elements={email:{value:'client@example.invalid'},password:{value:'password'}};
  let finishSignup,signupCalls=0;
  const uiApi={callback:async()=>false,hasSession:()=>false,signup:()=>{signupCalls++;return new Promise(resolve=>finishSignup=resolve)}};
- vm.runInNewContext(fs.readFileSync(path.join(dist,'workspace.js'),'utf8'),{window:{WorkspaceAPI:uiApi,WorkspaceModel:model},document:{querySelector:selector=>element(selector.slice(1)),querySelectorAll:()=>[]}});
+ vm.runInNewContext(fs.readFileSync(path.join(dist,'workspace.js'),'utf8'),{window:{WorkspaceAPI:uiApi,WorkspaceModel:model},URLSearchParams,location:{search:''},document:{querySelector:selector=>element(selector.slice(1)),querySelectorAll:()=>[]}});
  await new Promise(resolve=>setImmediate(resolve));
  element('signup-tab').onclick();
  const event={preventDefault(){},target:form};
