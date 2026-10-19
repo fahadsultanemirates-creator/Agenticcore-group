@@ -6,7 +6,7 @@ async function raw(path,options={},auth=false){
  const headers={apikey:config.key,'Content-Type':'application/json',...(auth&&session?{Authorization:'Bearer '+session.access_token}:{}),...options.headers};
  const r=await fetch(config.url+path,{...options,headers,cache:'no-store',signal:AbortSignal.timeout(20000)});
  const body=await r.text();let data;try{data=body?JSON.parse(body):null}catch{data=null}
- if(!r.ok){const error=new Error(data?.msg||data?.error_description||data?.message||data?.error||'Request could not complete. Please retry.');error.status=r.status;throw error}
+ if(!r.ok){const error=new Error(data?.msg||data?.error_description||data?.message||data?.error||'Request could not complete. Please retry.');error.status=r.status;error.code=data?.error_code||data?.code;if(r.status===429)error.message='Please wait before trying again. '+error.message+' If you already created an account, check your inbox and spam folder for the confirmation email, then sign in.';throw error}
  return data;
 }
 function keep(data){if(!data?.access_token||!data?.refresh_token)throw new Error('A valid session was not returned.');persist({...data,expires_at:data.expires_at||Math.floor(Date.now()/1000)+(data.expires_in||3600)});return data}
