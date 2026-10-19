@@ -24,4 +24,4 @@ Run in an isolated project with two distinct verified test users, organizations 
 
 After SQL cases pass, run Supabase security advisors and verify that no privileged keys, broad grants, unintended functions or public storage objects are exposed. Test the sign-in/request flow using separate browser sessions before launch.
 
-Current status: cases specified, NOT executed. The target project has not been selected or provisioned.
+Current status: SQL access cases were executed successfully in the separate Group project using backend/tests/core-access.sql. Server provisioning, idempotency, frontend validation and verified account linking remain unimplemented and untested. See activation-status.md.

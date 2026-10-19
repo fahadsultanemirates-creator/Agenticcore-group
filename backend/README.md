@@ -1,6 +1,6 @@
-# Office core foundation — review proposal
+# Office core foundation
 
-This is a backend design for a new dedicated Supabase project, not a deployed backend. Nothing in this folder is loaded by the public site. The SQL has not been executed or validated against Postgres yet; it must not be treated as an approved production migration.
+The initial schema is now installed and access-tested in the separate Agenticcore Group project. See activation-status.md for the exact target, applied migration history, test evidence and remaining work. Nothing in this folder is loaded by the public site; client sign-in and saved requests are not enabled yet.
 
 ## First usable slice
 
@@ -28,18 +28,14 @@ Existing Agency/Biz user IDs are not core identities. Require verified linking a
 
 Agency and Biz have separate live projects and existing public request, project and billing tables with RLS enabled. Listing confirms table existence and RLS flags only; existing policy correctness has not been audited. Click is also separate and stays outside core migration.
 
-Available candidate hosting organizations:
-- Agency account: pgkbkhjydoakvlfaidpu.
-- Biz account: bjohfcoervwkeorncusn.
-
-Recommended home: Agency account, with a NEW project named agenticcore-office-core in Singapore, matching Agency and Biz's existing region. Owner must select the hosting account before project creation. Check the plan/compute charges before provisioning; no project or paid resource has been created by this change.
+Selected home: the separate Agenticcore Group account and its existing Agenticcore-office-core project (pdaluprahifdejsjwjoi), in ap-south-1. The owner selected a separate account rather than either legacy site organization. No new paid resource was created.
 
 ## Activation checklist
 
-- Confirm hosting organization, project plan, region and budget.
-- Create a dedicated development project or isolated test environment.
-- Generate a migration with the current Supabase CLI; use this proposal as the reviewed starting point.
-- Run the database tests in acceptance-tests.md, then advisors; resolve issues before production.
+- Completed: confirmed the separate Group account and existing core project.
+- Completed: first core schema applied to the empty selected project; test fixtures executed in a rollback-only transaction.
+- Completed via Supabase migration tools; applied versions are recorded in activation-status.md.
+- SQL access cases passed and advisors were checked; remaining server and end-to-end cases stay outstanding.
 - Configure Auth site URL, allowed callbacks, email verification and abuse protection for Group's real production domain.
 - Implement transaction-safe organization onboarding and bounded client request submission, including rate limits and input validation.
 - Expose only required tables/operations; use publishable keys and authenticated sessions in the browser.
