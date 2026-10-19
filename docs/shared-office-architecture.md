@@ -4,7 +4,9 @@ Status: proposed architecture. No databases, accounts or production services mig
 
 ## Decision
 
-One central orchestration service connects the existing websites through authenticated server APIs and events. Retain existing site databases, logins, payment records and files initially. One framework does not require one physical database.
+Target: one shared office framework and one central Supabase project for Group, Agency, Biz and future general business sites. Click retains its existing independent framework and Supabase project because its prepaid quick-task execution works differently. Group can link to Click without moving Click execution into the shared core.
+
+Retain existing Agency and Biz databases, logins, payment records and files during the transition. Move their shared-office operations into the central project in phases; any later consolidation of legacy records requires a tested migration. This target does not authorize an immediate database cutover.
 
 A proposed central Supabase project stores organizations, memberships, office plans, allowances, tasks, assignments, approvals, run history, usage and reporting preferences. Each record belongs to an organization; connected work also carries a site identifier. Enforce membership-based row access and least-privilege grants. Keep provider credentials server-side.
 
@@ -15,7 +17,7 @@ A proposed central Supabase project stores organizations, memberships, office pl
 | Group core | Office subscriptions, allowances, coordination, approvals and reporting |
 | Agency | Individual projects, two-payment milestones and original customer records |
 | Biz | Individual business-task orders, two-payment milestones and original customer records |
-| Click | Prepaid quick-task orders, wallet and delivery records |
+| Click (independent) | Its existing framework, prepaid orders, wallet and delivery records; outside shared-core migration |
 
 The originating site remains the authority for its payment confirmations. Core stores verified event references, without inventing a second financial ledger. Browser success screens cannot prove payment.
 
@@ -40,11 +42,11 @@ Existing Telegram bots can remain entry points into the same core. Verify chat i
 1. Finalize Group allowances and onboarding.
 2. Review all live project schemas, hosting costs and account access; designate or provision the core in the correct organization.
 3. Prove one internal workflow: request, assignment, review, approved delivery and factual report.
-4. Connect one site using test events; test access isolation, duplicates, outages and reconciliation.
-5. Connect other sites, then assess shared login and consolidated reporting.
+4. Connect Agency using test events; test access isolation, duplicates, outages and reconciliation.
+5. Connect Biz and future general business sites; consolidate shared operations in the central project. Assess verified shared login and legacy-data migration separately. Click remains independent.
 
 Moving existing auth, storage or orders requires a separate inventory, backups, account mapping, rehearsal, cutover and recovery plan. Estate and Token remain outside this phase.
 
 ## Access observed
 
-The connected Supabase account currently lists Estate and Token only. The three global sites' live databases have not been inspected through that connection. No new paid project has been provisioned.
+All three connected accounts were checked. Agency, Biz and Click projects are now visible and reported ACTIVE_HEALTHY. Agency and Biz are in different Supabase organizations; the future core organization remains to be selected. Project listing confirms access, not schema or security validation. No new paid project has been provisioned and no production data has been changed.
