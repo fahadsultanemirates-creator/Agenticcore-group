@@ -27,14 +27,14 @@ class Element{
 }
 const document={createElement:tag=>new Element(tag)};
 const root={OfficeModel:model,OfficeAssistantModel:guide,OwnedOfficePackages:packages,WorkspaceModel:require(path.join(dist,'workspace-model.js'))};
-vm.runInNewContext(fs.readFileSync(path.join(dist,'office-workspace.js'),'utf8'),{window:root,document,console});
+vm.runInNewContext(fs.readFileSync(path.join(dist,'office-workspace.js'),'utf8'),{window:root,document,console,crypto:require('node:crypto').webcrypto});
 const office=root.OfficeWorkspace;
 function all(el){return [el,...el.children.filter(x=>x instanceof Element).flatMap(all)]}
 function find(el,predicate){const match=all(el).find(predicate);assert.ok(match,'Expected element');return match}
 function byText(el,tag,text){return find(el,e=>e.tag===tag&&e.textContent===text)}
 function field(el,name){return find(el,e=>e.name===name)}
 let calls=[],navigations=[],refreshes=0,release;
-const ctx={organization:{id:'business-a',name:'Example business'},role:'owner',records:{requests:[],projects:[]},notice(){},navigate:tab=>navigations.push(tab),save:async(route,brief)=>{calls.push({route,brief});await new Promise(r=>release=r)},saved:async()=>refreshes++};
+const ctx={organization:{id:'business-a',name:'Example business'},role:'owner',records:{requests:[],projects:[]},notice(){},history:async()=>[],chat:async(character,text,id)=>({reply:'Consider marketing and finance.',suggestion:{route:'managed',departments:['marketing','finance'],level:'essential',packageId:'starter',goals:text}}),navigate:tab=>navigations.push(tab),save:async(route,brief)=>{calls.push({route,brief});await new Promise(r=>release=r)},saved:async()=>refreshes++};
 async function main(){
  const target=new Element('main');office.renderOffice(target,ctx);
  const save=byText(target,'button','Save office proposal');assert.equal(save.disabled,true);
@@ -47,9 +47,9 @@ async function main(){
  const owned=field(target,'route');owned.value='owned';owned.onchange();const ownedSave=form.onsubmit(event);assert.equal(calls[1].route,'owned');assert.equal(calls[1].brief.configuration.total,1500);release();await ownedSave;
  const viewer=new Element('main');office.renderOffice(viewer,{...ctx,role:'viewer'});const viewerSave=byText(viewer,'button','Save office proposal');assert.equal(viewerSave.disabled,true);await find(viewer,e=>e.tag==='form').onsubmit(event);assert.equal(calls.length,2);
  const other=new Element('main');office.renderOffice(other,{...ctx,organization:{id:'business-b',name:'Other business'}});assert.equal(field(other,'goals').value,'');assert.equal(field(other,'officeName').value,'Other business');assert.equal(byText(other,'button','Save office proposal').disabled,true);
- const chat=new Element('main');office.renderChat(chat,ctx);assert.equal(all(chat).filter(e=>e.attributes['aria-pressed']).length,10);
- const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';chatForm.onsubmit(event);
- byText(chat,'button','Use these departments in my builder').onclick();assert.equal(navigations.at(-1),'office');
+ const chat=new Element('main');office.renderChat(chat,ctx);await new Promise(resolve=>setImmediate(resolve));assert.equal(all(chat).filter(e=>e.attributes['aria-pressed']).length,10);
+ const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';await chatForm.onsubmit(event);
+ byText(chat,'button','Review this office suggestion').onclick();assert.equal(navigations.at(-1),'office');
  const suggested=new Element('main');office.renderOffice(suggested,ctx);assert.equal(find(suggested,e=>e.value==='marketing').checked,true);assert.equal(find(suggested,e=>e.value==='finance').checked,true);
  const forgeButton=find(chat,e=>e.tag==='button'&&e.attributes['aria-label']==='Forge — available with an active package');assert.equal(forgeButton.disabled,true);
  office.selectAssistant('forge');const unpaid=new Element('main');office.renderChat(unpaid,ctx);assert.ok(all(unpaid).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));

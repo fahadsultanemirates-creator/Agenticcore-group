@@ -81,7 +81,7 @@ function render(){
  if(tab==='requests')return renderRequests(content);if(tab==='projects')return renderProjects(content);if(tab==='deliverables')return renderDeliverables(content);
  if(tab==='office'||tab==='team'){
   const orgId=organization.id;
-  const context={organization,role,records,notice,navigate(value){tab=value;render()},
+  const context={organization,role,records,notice,history(character){return api.chatHistory(orgId,character)},chat(character,text,id){if(organization.id!==orgId)return Promise.reject(new Error('Your business changed. Open the conversation again.'));return api.chat(orgId,character,text,id)},navigate(value){tab=value;render()},
    save(route,brief){if(organization.id!==orgId)return Promise.reject(new Error('Your business changed. Review the proposal again.'));return api.saveRequest(orgId,route,brief)},
    async saved(){if(organization.id!==orgId)return;await load();notice('Office proposal saved for scope review. No payment or service has been activated.')}};
   return window.OfficeWorkspace[tab==='office'?'renderOffice':'renderChat'](content,context);
