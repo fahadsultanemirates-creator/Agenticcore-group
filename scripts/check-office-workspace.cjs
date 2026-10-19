@@ -26,6 +26,7 @@ class Element{
  remove(){if(this.parent)this.parent.children=this.parent.children.filter(e=>e!==this)}
  setAttribute(k,v){this.attributes[k]=v}
  focus(){}
+ click(){this.clicked=true}
 }
 const document={createElement:tag=>new Element(tag)};
 const root={requestAnimationFrame:fn=>fn(),OfficeModel:model,OfficeAssistantModel:guide,OwnedOfficePackages:packages,WorkspaceModel:require(path.join(dist,'workspace-model.js'))};
@@ -51,6 +52,7 @@ async function main(){
  const other=new Element('main');office.renderOffice(other,{...ctx,organization:{id:'business-b',name:'Other business'}});assert.equal(field(other,'goals').value,'');assert.equal(field(other,'officeName').value,'Other business');assert.equal(byText(other,'button','Save office proposal').disabled,true);
  const chat=new Element('main');office.renderChat(chat,ctx);await new Promise(resolve=>setImmediate(resolve));assert.equal(all(chat).filter(e=>e.attributes['aria-pressed']).length,10);
  assert.equal(find(chat,e=>e.tag==='dialog').open,true);assert.equal(find(chat,e=>e.attributes['aria-label']==='Maya portrait').attributes.role,'img');
+assert.ok(all(chat).some(e=>e.attributes['aria-label']==='Attach files'));assert.ok(all(chat).some(e=>e.attributes['aria-label']==='Send message'));
  const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';await chatForm.onsubmit(event);
  assert.ok(all(chat).some(e=>e.tag==='p'&&e.textContent==='Consider marketing and finance.'));assert.equal(find(chat,e=>e.tag==='details'&&e.className==='chat-suggestion').open,undefined);
  byText(chat,'button','Review this office suggestion').onclick();assert.equal(navigations.at(-1),'office');
@@ -61,6 +63,10 @@ async function main(){
  office.selectAssistant('forge');const paid=new Element('main');office.renderChat(paid,paidContext);assert.ok(all(paid).some(e=>e.tag==='h3'&&e.textContent.startsWith('Forge /')));
  office.selectAssistant('forge');const expired=new Element('main');office.renderChat(expired,{...paidContext,records:{...ctx.records,packageAccess:[{organization_id:'business-a',ends_at:'2020-01-01T00:00:00Z'}]}});assert.ok(all(expired).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));
  office.selectAssistant('forge');const wrongBusiness=new Element('main');office.renderChat(wrongBusiness,{...paidContext,records:{...ctx.records,packageAccess:[{organization_id:'business-b',ends_at:new Date(Date.now()+86400000).toISOString()}]}});assert.ok(all(wrongBusiness).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));
+ let attachmentArgs;
+ const uploadTarget=new Element('main');office.renderChat(uploadTarget,{...ctx,upload:async file=>({id:'file-1',name:file.name,mime:file.type,size:file.size}),chat:async(character,text,id,ids)=>{attachmentArgs={text,ids};return {reply:'I read the attachment.',suggestion:{route:'none'}}}});await new Promise(resolve=>setImmediate(resolve));
+ const picker=find(uploadTarget,e=>e.tag==='input'&&e.type==='file');picker.files=[{name:'notes.txt',type:'text/plain',size:12}];await picker.onchange();assert.ok(all(uploadTarget).some(e=>e.tag==='strong'&&e.textContent==='notes.txt'));
+ const attachForm=find(uploadTarget,e=>e.tag==='form');await attachForm.onsubmit(event);assert.equal(attachmentArgs.ids.join(','),'file-1');assert.match(attachmentArgs.text,/review the attached file/);assert.ok(all(uploadTarget).some(e=>e.tag==='p'&&e.textContent==='I read the attachment.'));
  office.selectAssistant('amara');const amara=new Element('main');office.renderChat(amara,ctx);assert.ok(all(amara).some(e=>e.tag==='h3'&&e.textContent.startsWith('Amara /')));
  office.reset();const afterLogout=new Element('main');office.renderOffice(afterLogout,ctx);assert.equal(field(afterLogout,'goals').value,'');assert.equal(byText(afterLogout,'button','Save office proposal').disabled,true);
  console.log('Office workspace checks passed: shared pricing for 381 managed selections and 4 builds; duplicate-save guard, viewer access, business isolation, ten assistants and chat-to-builder handoff.');
