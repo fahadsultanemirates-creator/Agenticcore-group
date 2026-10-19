@@ -1,0 +1,29 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist');
+const model=require(path.join(dist,'workspace-model.js'));
+assert.equal(model.safeUrl('javascript:alert(1)'),null);
+assert.equal(model.safeUrl('https://user:password@example.com'),null);
+assert.equal(model.safeUrl('https://example.com/file'),'https://example.com/file');
+assert.deepEqual(model.summary([{status:'submitted'},{status:'closed'}],[{status:'completed'},{status:'awaiting_approval'},{status:'planned'}]),{requests:1,active:1,approvals:1});
+const html=fs.readFileSync(path.join(dist,'workspace.html'),'utf8');
+const ids=[...html.matchAll(/id="([^"]+)"/g)].map(x=>x[1]);assert.equal(new Set(ids).size,ids.length);
+for(const [,asset]of html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css))"/g))assert.ok(fs.existsSync(path.join(dist,asset)));
+const cfg=fs.readFileSync(path.join(dist,'workspace-config.js'),'utf8');
+assert.ok(cfg.includes('sb_publishable_'));assert.ok(!cfg.includes('service_role'));
+async function main(){
+ const storage=new Map();const queue=[];const calls=[];
+ const context={window:{WorkspaceConfig:{url:'https://core.example',key:'public'}},sessionStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},location:{origin:'https://office.example',pathname:'/workspace.html',hash:''},history:{replaceState(){}},URLSearchParams,TextEncoder,AbortSignal,fetch:async(url,options)=>{calls.push({url,options});const response=queue.shift();if(!response)throw Error('Unexpected request');return {ok:response.status<400,status:response.status,text:async()=>JSON.stringify(response.body)}}};
+ vm.runInNewContext(fs.readFileSync(path.join(dist,'workspace-api.js'),'utf8'),context);
+ const api=context.window.WorkspaceAPI;
+ queue.push({status:200,body:{access_token:'token',refresh_token:'refresh',expires_in:3600}},{status:200,body:{id:'user',email_confirmed_at:'confirmed'}});
+ await api.login('client@example.invalid','password');assert.ok(api.hasSession());
+ queue.push({status:201,body:[{id:'request'}]});
+ await api.saveRequest('business','managed',{title:'Real task',text:'Useful output'});
+ const sent=JSON.parse(calls.at(-1).options.body);assert.deepEqual(Object.keys(sent).sort(),['brief','organization_id','route']);assert.equal(sent.organization_id,'business');
+ assert.equal(calls.at(-1).options.headers.Authorization,'Bearer token');
+ await assert.rejects(()=>api.saveRequest('business','managed',{text:'a'.repeat(61000)}),/too long/);
+ queue.push({status:401,body:{message:'Expired'}});
+ await assert.rejects(()=>api.logout(),/Expired/);assert.equal(api.hasSession(),false);
+ console.log('Workspace checks passed: counts, safe links, assets, auth session, bounded submission, server-controlled fields and local sign-out.');
+}
+main().catch(e=>{console.error(e);process.exit(1)});
