@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const model=root.OfficeModel,guide=root.OfficeAssistantModel,packages=root.OwnedOfficePackages;
-let business=null,draft=null,character='maya',messages=[],context,conversationBrief='',requestedAssistant=null;
+let business=null,draft=null,character='maya',messages=[],context,conversationBrief='',requestedAssistant=null,viewVersion=0;
 function initial(){return {route:'managed',departments:[],level:'essential',packageId:'starter',officeName:'',characterName:'',characterStyle:'To be chosen',goals:''}}
 function node(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
 function button(text,work,cls='outline'){const b=node('button',text,cls);b.type='button';b.onclick=work;return b}
@@ -10,7 +10,7 @@ function bind(ctx){context=ctx;if(business!==ctx.organization.id){business=ctx.o
 function openChat(id){if(guide.team.some(p=>p.id===id)){character=id;messages=[]}context.navigate('team')}
 function labelInput(form,text,name,value,max=120){const label=node('label',text);const input=node('input');input.name=name;input.value=value;input.maxLength=max;input.oninput=()=>draft[name]=input.value;label.append(input);form.append(label);return input}
 function renderOffice(target,ctx){
- bind(ctx);
+ ++viewVersion;bind(ctx);
  title(target,'AMARA / DESIGN YOUR OFFICE','Build an office around your work.','Select the support you need, review the allowance and save a proposal to your business. Maya stays your everyday contact.');
  const intro=node('div',undefined,'office-toolbar');intro.append(button('Ask Amara to help ↗',()=>openChat('amara')),button('Talk to Maya ↗',()=>openChat('maya')));target.append(intro);
  const previous=(ctx.records.requests||[]).filter(r=>r.brief?.kind==='office_configuration');
@@ -55,28 +55,44 @@ function renderOffice(target,ctx){
  };
 }
 function renderChat(target,ctx){
- bind(ctx);
+ const view=++viewVersion;bind(ctx);
  const forgeAllowed=(ctx.records.packageAccess||[]).some(row=>row.organization_id===ctx.organization.id&&Date.parse(row.ends_at)>Date.now());
  if(character==='forge'&&!forgeAllowed){character='maya';messages=[];conversationBrief=''}
  title(target,'YOUR TEAM / ONE PLACE TO TALK','Talk through your next step.','Maya coordinates your office. Amara helps with setup; specialists explain their departments.');
  const layout=node('div',undefined,'office-chat-layout');const roster=node('nav',undefined,'office-team-roster');roster.setAttribute('aria-label','Choose an office assistant');
  guide.team.forEach((p,i)=>{const locked=p.id==='forge'&&!forgeAllowed;const b=button('',()=>{if(locked)return;character=p.id;messages=[];conversationBrief='';target.replaceChildren();renderChat(target,ctx)},'team-contact');b.disabled=locked;b.setAttribute('aria-pressed',p.id===character?'true':'false');b.setAttribute('aria-label',locked?'Forge — available with an active package':p.name+' — '+p.role);const portrait=node('span',undefined,'team-avatar');portrait.style.setProperty('--x',(i%5)*25+'%');portrait.style.setProperty('--y',i<5?'23%':'91%');portrait.setAttribute('aria-hidden','true');const copy=node('span');copy.append(node('strong',p.name),node('small',locked?'Active package required':p.role));b.append(portrait,copy);roster.append(b)});
- const panel=node('section',undefined,'office-chat-panel');const person=guide.team.find(p=>p.id===character)||guide.team[1];panel.append(node('h3',person.name+' / '+person.role),node('p','Guided assistant · live AI conversation is not connected. Messages stay in this page until you change assistant, business or sign out. Only a proposal you explicitly save goes to your business records.','fine'));
+ const panel=node('section',undefined,'office-chat-panel');const person=guide.team.find(p=>p.id===character)||guide.team[1];panel.append(node('h3',person.name+' / '+person.role),node('p','AI assistant · Messages are sent to OpenAI for replies and saved privately to your account within this business. Office suggestions need your review before submission. This chat cannot activate services or perform external actions.','fine'));
  const log=node('div',undefined,'office-chat-log');log.setAttribute('role','log');log.setAttribute('aria-label','Conversation with '+person.name);log.setAttribute('aria-live','polite');
  function bubble(name,text,kind){const m=node('article',undefined,'chat-message '+kind);m.append(node('strong',name),node('p',text));log.append(m)}
- bubble(person.name,person.intro,'assistant');messages.forEach(m=>bubble(m.who==='client'?'You':person.name,m.text,m.who));
+ bubble(person.name,person.intro,'assistant');
  const actions=node('div',undefined,'office-chat-actions');actions.append(button('Create or edit my office ↗',()=>context.navigate('office'),'dark'),button('View requests',()=>context.navigate('requests')),button('View projects',()=>context.navigate('projects')));
  if(person.departments.length)actions.append(button('Explore '+person.name+'’s departments',()=>{const recommended=person.departments;showSuggestion(recommended)},'outline'));
  const suggestion=node('div',undefined,'chat-suggestion');suggestion.hidden=true;
  function showSuggestion(ids){suggestion.replaceChildren(node('p','Suggested departments: '+ids.map(id=>model.departments.find(d=>d.id===id).name).join(', ')),button('Use these departments in my builder',()=>{draft.route='managed';draft.departments=[...ids];context.navigate('office')}));suggestion.hidden=false}
- const form=node('form',undefined,'office-chat-compose');const label=node('label','Your message');const input=node('textarea');input.rows=3;input.maxLength=2000;input.required=true;input.placeholder='For example: I need social posts and bookkeeping support.';label.append(input);const send=node('button','Send to guided assistant','dark');send.type='submit';form.append(label,send);
+ function showOfficeSuggestion(s){if(!s||s.route==='none')return;const chosen=(s.departments||[]).filter(id=>model.departments.some(d=>d.id===id));suggestion.replaceChildren(node('p',s.route==='owned'?'Suggested route: a company-owned office build. Review its scope and milestone estimate.':'Suggested departments: '+chosen.map(id=>model.departments.find(d=>d.id===id).name).join(', ')),button('Review this office suggestion',()=>{draft.route=s.route;draft.departments=chosen;if(model.levels.some(l=>l.id===s.level))draft.level=s.level;if(packages.some(p=>p.id===s.packageId))draft.packageId=s.packageId;if(s.goals)draft.goals=s.goals.slice(0,4000);context.navigate('office')}));suggestion.hidden=false}
+ const form=node('form',undefined,'office-chat-compose');const label=node('label','Your message');const input=node('textarea');input.rows=3;input.maxLength=2000;input.required=true;input.placeholder='For example: I need social posts and bookkeeping support.';label.append(input);const send=node('button','Send message','dark');send.type='submit';form.append(label,send);
  const useBrief=button('Use my messages as an office brief',()=>{draft.goals=conversationBrief.slice(0,4000);context.navigate('office')});useBrief.disabled=!conversationBrief;
- const remaining=node('p','This guide explains and prepares briefs. It does not deliver work or contact people.','fine');
- form.onsubmit=e=>{e.preventDefault();if(person.id==='forge'&&!(ctx.records.packageAccess||[]).some(row=>row.organization_id===ctx.organization.id&&Date.parse(row.ends_at)>Date.now())){target.replaceChildren();renderChat(target,ctx);return}const text=input.value.trim();if(!text)return;
-  if(messages.length>=40){remaining.textContent='This conversation has reached its planning limit. Use your messages as a brief, or choose another assistant to start again.';return}
-  const answer=guide.reply(text,person,ctx.records,model);messages.push({who:'client',text},{who:'assistant',text:answer.text});bubble('You',text,'client');bubble(person.name,answer.text,'assistant');conversationBrief=(conversationBrief?conversationBrief+'\n':'')+text;if(conversationBrief.length>4000)conversationBrief=conversationBrief.slice(0,4000);useBrief.disabled=false;input.value='';suggestion.hidden=true;if(answer.ids.length)showSuggestion(answer.ids);log.scrollTop=log.scrollHeight;
+ const remaining=node('p','Loading your saved conversation…','fine');remaining.setAttribute('role','status');
+ const reload=button('Refresh conversation',()=>{target.replaceChildren();renderChat(target,ctx)});actions.append(reload);
+ let sending=false,historyReady=false;
+ send.disabled=true;
+ async function history(){
+  try{const rows=await ctx.history(person.id);if(view!==viewVersion)return;
+   messages=[];conversationBrief='';log.replaceChildren();bubble(person.name,person.intro,'assistant');
+   [...rows].reverse().forEach(row=>{messages.push({who:'client',text:row.user_text});bubble('You',row.user_text,'client');conversationBrief=(conversationBrief+'\n'+row.user_text).slice(-4000);if(row.state==='complete'&&row.reply){messages.push({who:'assistant',text:row.reply});bubble(person.name,row.reply,'assistant')}else bubble('Message status',row.state==='pending'?'This message has no completed reply yet. Refresh shortly; if it stays pending, send a new message.':'This message did not complete. You can send it again.','status')});
+   useBrief.disabled=!conversationBrief;historyReady=true;send.disabled=false;remaining.textContent='Your latest 30 messages with this character are shown. AI can make mistakes; review proposals before saving.';log.scrollTop=log.scrollHeight;
+  }catch(e){if(view!==viewVersion)return;remaining.textContent=e.message+' Use Refresh conversation to try again.'}
+ }
+ form.onsubmit=async e=>{e.preventDefault();if(sending||!historyReady)return;
+  const text=input.value.trim();if(!text)return;
+  sending=true;send.disabled=true;input.disabled=true;send.textContent='Thinking…';remaining.textContent='Preparing your reply…';suggestion.hidden=true;
+  try{const answer=await ctx.chat(person.id,text,crypto.randomUUID());if(view!==viewVersion)return;
+   messages.push({who:'client',text},{who:'assistant',text:answer.reply});bubble('You',text,'client');bubble(person.name,answer.reply,'assistant');conversationBrief=(conversationBrief+'\n'+text).slice(-4000);useBrief.disabled=false;input.value='';showOfficeSuggestion(answer.suggestion);log.scrollTop=log.scrollHeight;remaining.textContent='Conversation saved. Review any suggested office in the builder.';
+  }catch(e){if(view!==viewVersion)return;remaining.textContent=e.message+' Your text is still in the message box. Refresh the conversation before retrying if the connection was interrupted.'}
+  finally{if(view===viewVersion){sending=false;send.disabled=false;input.disabled=false;send.textContent='Send message'}}
  };
+ history();
  panel.append(log,actions,suggestion,form,useBrief,remaining);layout.append(roster,panel);target.append(layout);
 }
-root.OfficeWorkspace={renderOffice,renderChat,reset(){business=null;draft=null;messages=[];conversationBrief='';character='maya';requestedAssistant=null},selectAssistant(id){if(guide.team.some(p=>p.id===id)){character=id;requestedAssistant=id;messages=[];conversationBrief=''}}};
+root.OfficeWorkspace={renderOffice,renderChat,reset(){++viewVersion;business=null;draft=null;messages=[];conversationBrief='';character='maya';requestedAssistant=null},selectAssistant(id){if(guide.team.some(p=>p.id===id)){character=id;requestedAssistant=id;messages=[];conversationBrief=''}}};
 })(window);

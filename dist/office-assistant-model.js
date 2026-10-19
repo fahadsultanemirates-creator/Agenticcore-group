@@ -41,7 +41,7 @@ function reply(text,character,records,model){
  if(/\b(price|cost|payment|budget|package)\b/i.test(text)&&!ids.length)return {text:'Managed offices start at $100 per 28-day cycle and use four weekly payments. Company-owned builds have starting scopes at $1,500, $3,000, $5,000 and $10,000, with four milestone payments. Use the builder to see an estimate for your exact selection. All figures are proposed until scope is confirmed.',ids:[]};
  if(ids.length)return {text:'These departments may fit what you described: '+ids.map(id=>model.departments.find(d=>d.id===id).name).join(', ')+'. Review the suggestion in the office builder before applying it. Your current choices stay in place until you choose to replace them.',ids};
  if(/\b(create|build|office|start|setup)\b/i.test(text))return {text:'Choose managed support for recurring work, or a company-owned office build. Open the builder below to choose your route, departments or build scope, and first tasks. You can review everything before saving.',ids:[]};
- return {text:character.intro+' This guided assistant can explain departments, prices and recorded workspace sections. For your own requirements, choose “Use this as my brief” and review the details in the builder. Live AI conversation and task execution are not connected yet.',ids:[]};
+ return {text:character.intro+' This guided assistant can explain departments, prices and recorded workspace sections. For your own requirements, choose “Use this as my brief” and review the details in the builder. Task execution is not connected yet.',ids:[]};
 }
 const api={team,recommend,snapshot,describe,reply,money};root.OfficeAssistantModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
