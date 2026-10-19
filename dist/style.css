@@ -19,3 +19,5 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 @media(max-width:600px){.office-faq summary{font-size:17px}.route-table th,.route-table td{padding:14px}.preview-note span{line-height:1.5}}
 
 #office-summary li small{display:block;color:var(--muted);font-size:13px;line-height:1.65;margin-top:6px}
+
+.onboarding-group{border:1px solid var(--line);border-radius:12px;padding:20px;margin:24px 0}.onboarding-group legend{font-weight:700;padding:0 8px}.onboarding-group label{display:block;margin-bottom:16px}.onboarding-group label:last-child{margin-bottom:0}.onboarding-group .fine{margin:6px 0 18px}
