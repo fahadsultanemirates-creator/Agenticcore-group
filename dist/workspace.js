@@ -2,6 +2,7 @@
 'use strict';
 const $=s=>document.querySelector(s),api=window.WorkspaceAPI,model=window.WorkspaceModel;
 let user=null,organizations=[],organization=null,role=null,tab='overview',mode='login',recovery=false;
+let importedTrial=null;
 let records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};
 const assistantLink=new URLSearchParams(location.search||'').get('assistant');
 if(window.OfficeAssistantModel?.team.some(p=>p.id===assistantLink)){tab='team';window.OfficeWorkspace.selectAssistant(assistantLink)}
@@ -39,9 +40,9 @@ $('#setup-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async
 $('#business-switch').onchange=async e=>{organization=organizations.find(o=>o.id===e.target.value);try{await load()}catch(err){notice(err.message)}};
 $('#refresh').onclick=async()=>{const b=$('#refresh');b.disabled=true;try{await load();notice('Workspace refreshed.')}catch(e){notice(e.message)}finally{b.disabled=false}};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
-function openRequest(){if(role==='viewer'){notice('This business gives your account read-only access.');return}const form=$('#request-form');form.reset();$('#request-error').textContent='';try{const draft=JSON.parse(sessionStorage.getItem('agenticcore.pendingBrief')||'null');if(draft&&typeof draft.text==='string'){form.elements.details.value=draft.text.slice(0,20000);if(draft.text.length>20000)$('#request-error').textContent='Your imported brief exceeds the request limit. Review and shorten it before saving; the original downloaded brief is unchanged.';form.elements.title.value='My office starting brief';form.elements.route.value=draft.route==='owned'?'owned':'managed'}}catch{}$('#request-dialog').showModal()}
+function openRequest(){importedTrial=null;if(role==='viewer'){notice('This business gives your account read-only access.');return}const form=$('#request-form');form.reset();$('#request-error').textContent='';try{const draft=JSON.parse(sessionStorage.getItem('agenticcore.pendingBrief')||'null');if(draft&&typeof draft.text==='string'){form.elements.details.value=draft.text.slice(0,20000);if(draft.text.length>20000)$('#request-error').textContent='Your imported brief exceeds the request limit. Review and shorten it before saving; the original downloaded brief is unchanged.';form.elements.title.value=typeof draft.title==='string'?draft.title.slice(0,180):'My office starting brief';form.elements.route.value=draft.route==='owned'?'owned':'managed';if(draft.kind==='launch_trial_request'&&draft.trial?.version===1){const items=window.TrialModel.selection(draft.trial.serviceIds);importedTrial={version:1,days:7,serviceIds:items.map(s=>s.id)}}}}catch{}$('#request-dialog').showModal()}
 $('#new-request').onclick=openRequest;$('#request-dialog .close').onclick=()=>$('#request-dialog').close();
-$('#request-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async()=>{try{const f=e.target.elements;$('#request-error').textContent='';await api.saveRequest(organization.id,f.route.value,{title:f.title.value.trim(),text:f.details.value.trim(),version:1});sessionStorage.removeItem('agenticcore.pendingBrief');$('#request-dialog').close();tab='requests';await load();notice('Request saved for review. No payment or service has been activated.')}catch(err){$('#request-error').textContent=err.message}})};
+$('#request-form').onsubmit=async e=>{e.preventDefault();await busy(e.target,async()=>{try{const f=e.target.elements;$('#request-error').textContent='';await api.saveRequest(organization.id,f.route.value,{title:f.title.value.trim(),text:f.details.value.trim(),version:1,...(importedTrial?{kind:'launch_trial_request',trial:importedTrial}:{})});importedTrial=null;sessionStorage.removeItem('agenticcore.pendingBrief');$('#request-dialog').close();tab='requests';await load();notice('Request saved for review. No payment or service has been activated.')}catch(err){$('#request-error').textContent=err.message}})};
 async function initialize(){
  show('loading-panel');notice('');
  try{user=await api.user();if(!user.email_confirmed_at)throw new Error('Confirm your email before opening your workspace.');
@@ -51,7 +52,7 @@ async function initialize(){
  organization=organizations.find(o=>o.id===organization?.id)||organizations[0];
  const select=$('#business-switch');select.replaceChildren(...organizations.map(o=>{const option=node('option',o.name);option.value=o.id;return option}));select.value=organization.id;select.hidden=organizations.length<2;
  await load();show('dashboard');
- try{if(sessionStorage.getItem('agenticcore.pendingBrief'))notice('Your office brief is ready to save. Choose New request to review it before submitting.')}catch{}
+ try{if(sessionStorage.getItem('agenticcore.pendingBrief'))notice('Your starting brief is ready. Choose New request to review it before submitting. Trial requests need acceptance and a confirmed start date.')}catch{}
  }catch(e){user=null;show('auth-panel');notice(e.message)}
 }
 async function load(){
@@ -65,7 +66,7 @@ function card(title){const el=node('article',undefined,'workspace-card');el.appe
 function recordTop(title,status){const el=node('div',undefined,'record-top');el.append(node('h3',title),node('span',model.status(status),'status-pill'));return el}
 function renderRequests(target){
  const list=node('div',undefined,'record-list');if(!records.requests.length)list.append(empty('No requests yet. Save your first office brief or describe a new task.'));
- records.requests.forEach(r=>{const c=node('article',undefined,'workspace-card');c.append(recordTop(r.brief?.title||'Office request',r.status),node('p',(r.route==='owned'?'Company-owned office':'Managed office')+' · '+date(r.created_at),'record-date'));const d=node('details');d.append(node('summary','View submitted brief'),node('pre',r.brief?.text||JSON.stringify(r.brief,null,2),'record-body'));c.append(d);list.append(c)});target.append(list);
+ records.requests.forEach(r=>{const c=node('article',undefined,'workspace-card');c.append(recordTop(r.brief?.title||'Office request',r.status),node('p',(r.brief?.kind==='launch_trial_request'?'Seven-day trial request':r.route==='owned'?'Company-owned office':'Managed office')+' · '+date(r.created_at),'record-date'));const d=node('details');d.append(node('summary','View submitted brief'),node('pre',r.brief?.text||JSON.stringify(r.brief,null,2),'record-body'));c.append(d);list.append(c)});target.append(list);
 }
 function renderProjects(target){
  const list=node('div',undefined,'record-list');if(!records.projects.length)list.append(empty('No accepted projects yet. A submitted request appears here only after a project is scoped and created by the team.'));

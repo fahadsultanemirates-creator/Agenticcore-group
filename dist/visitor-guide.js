@@ -4,6 +4,7 @@ const model=root.OfficeModel,builds=root.OwnedOfficePackages;
 const money=n=>'$'+n.toLocaleString('en-US',{maximumFractionDigits:2});
 function answer(text){
  const t=String(text).trim();
+ if(/\b(trial|free|try)\b/i.test(t))return {text:'Our seven-day launch trial lets you choose up to two small deliverables from different departments: three social captions, one short video script, a one-page document, five FAQ replies, a blank expense tracker, or a three-point website review. No card or automatic paid renewal. One trial per business, subject to scope and capacity review. The week starts on the date confirmed by the team; this is not a paid package or Forge access.',target:'launch-trial'};
  if(/\b(forge)\b/i.test(t))return {text:'Forge introduces the Agenticcore vision. Direct conversation with Forge is reserved for clients with an active office package. I can help you explore the options now.',target:'office-options-route'};
  if(/\b(status|submitted|proposal|request|progress|my account)\b/i.test(t))return {text:'Your proposals and recorded progress are private. Sign in to your workspace to review them with Maya. A submitted proposal awaits scope review and does not activate a service.',workspace:true};
  if(/\b(managed|compare|difference|routes?)\b/i.test(t))return {text:'Managed office: choose departments and a recurring work allowance; Agenticcore coordinates delivery and the standard tools within scope.\n\nCompany-owned office: commission a framework connected to your systems, with an agreed handover. You pay a scoped build plus ongoing usage costs.\n\nChoose managed support for recurring work, or an owned build for your company’s own framework.',target:'office-options-route'};
@@ -29,6 +30,7 @@ function bubble(text,kind){const article=node('article',null,'visitor-message '+
 function submit(text){const value=String(text).trim().slice(0,1000);if(!value)return;brief.push(value);brief=brief.slice(-8);bubble(value,'client');const reply=answer(value);if(reply.route)route=reply.route;const article=bubble(reply.text,'assistant');if(reply.target){const link=node('a','Explore this option ↗');link.href='#'+reply.target;link.onclick=()=>dialog.close();article.append(link)}if(reply.workspace){const link=node('a','Open my workspace ↗');link.href='workspace.html?assistant=maya';article.append(link)}log.scrollTop=log.scrollHeight}
 function open(){if(!dialog.open)dialog.showModal()}
 document.querySelectorAll('[data-visitor-guide]').forEach(button=>button.onclick=open);
+if(root.IntersectionObserver){const hero=document.querySelector('.visitor-hero-button'),launcher=document.querySelector('.visitor-launcher');if(hero&&launcher)new root.IntersectionObserver(entries=>{launcher.hidden=entries[0].isIntersecting},{threshold:0}).observe(hero)}
 document.querySelector('#visitor-close').onclick=()=>dialog.close();
 document.querySelectorAll('[data-visitor-topic]').forEach(button=>button.onclick=()=>submit(button.dataset.visitorTopic));
 form.onsubmit=e=>{e.preventDefault();submit(input.value);input.value='';input.focus()};
