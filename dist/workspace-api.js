@@ -40,6 +40,7 @@ const apiObject={
  async organizations(){return api('/rest/v1/office_organizations?select=id,name&order=created_at.asc')},
  async membership(org,user){return api('/rest/v1/office_memberships?select=role&organization_id=eq.'+encodeURIComponent(org)+'&user_id=eq.'+encodeURIComponent(user))},
  async records(table,org,order='created_at.desc',limit=200){const tables=['office_requests','office_projects','office_milestones','office_deliverables','office_updates'];if(!tables.includes(table))throw new Error('Unknown workspace resource');return api('/rest/v1/'+table+'?select=*&organization_id=eq.'+encodeURIComponent(org)+'&order='+encodeURIComponent(order)+'&limit='+limit)},
+ async packageAccess(org){return api('/rest/v1/office_package_access?select=organization_id,ends_at&organization_id=eq.'+encodeURIComponent(org))},
  async saveRequest(organization,route,brief){if(!['managed','owned'].includes(route))throw new Error('Choose an office route.');const text=JSON.stringify(brief);if(new TextEncoder().encode(text).length>60000)throw new Error('Your brief is too long. Please shorten it.');return api('/rest/v1/office_requests',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({organization_id:organization,route,brief})})}
 };
 root.WorkspaceAPI=apiObject;

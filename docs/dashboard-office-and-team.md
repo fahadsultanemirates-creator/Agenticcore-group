@@ -38,3 +38,11 @@ Add an authenticated server endpoint and a chosen model provider after server-si
 npm run check covers the existing 384 public-builder cases and 381 nonempty managed dashboard selections, all four owned builds, summary serialization, request-save payloads, duplicate-save protection, read-only access, business-context reset, all ten character options and accepted chat-to-builder suggestions. The new UI checks execute the production handlers against an in-memory DOM and mocked API, without live customer writes. Existing authentication and onboarding checks remain part of the command.
 
 Real mobile/desktop layout QA and a signed-in save/reload check remain required after the PR is deployed. No public or live-AI functionality should be advertised beyond the guided behavior described here.
+
+## Forge package access
+
+Forge remains visible in the public team introduction, but has no public direct-chat link. His dashboard contact is locked until the current business has an active office_package_access record. A direct URL selecting Forge falls back to Maya when access is missing, expired or cannot be loaded. Neither signup, office proposals nor project status grants package access.
+
+The package-access table is installed in the Group core. Clients have SELECT only, and its RLS exposes only their own business's enabled record inside its start/end period. Only trusted billing or administrative services can record purchase access; no real businesses were granted access by this change. Payment integration is still pending. The frontend checks business identity and expiry, including before a guided Forge reply. These controls govern the current guided interface; a future live-chat endpoint must independently check the same server-side entitlement on every request, including expiry and revocation, rather than trusting the frontend.
+
+Rollback-only database tests passed for organization isolation, client grant/update rejection, anonymous denial and expired, future or revoked packages. All fixtures were rolled back. Frontend tests cover unpaid direct links, active access, wrong-business records and expiration. Browser visual testing remains outstanding.

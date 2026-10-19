@@ -51,6 +51,12 @@ async function main(){
  const chatForm=find(chat,e=>e.tag==='form'),message=find(chatForm,e=>e.tag==='textarea');message.value='I need social posts and bookkeeping';chatForm.onsubmit(event);
  byText(chat,'button','Use these departments in my builder').onclick();assert.equal(navigations.at(-1),'office');
  const suggested=new Element('main');office.renderOffice(suggested,ctx);assert.equal(find(suggested,e=>e.value==='marketing').checked,true);assert.equal(find(suggested,e=>e.value==='finance').checked,true);
+ const forgeButton=find(chat,e=>e.tag==='button'&&e.attributes['aria-label']==='Forge — available with an active package');assert.equal(forgeButton.disabled,true);
+ office.selectAssistant('forge');const unpaid=new Element('main');office.renderChat(unpaid,ctx);assert.ok(all(unpaid).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));
+ const paidContext={...ctx,records:{...ctx.records,packageAccess:[{organization_id:'business-a',ends_at:new Date(Date.now()+86400000).toISOString()}]}};
+ office.selectAssistant('forge');const paid=new Element('main');office.renderChat(paid,paidContext);assert.ok(all(paid).some(e=>e.tag==='h3'&&e.textContent.startsWith('Forge /')));
+ office.selectAssistant('forge');const expired=new Element('main');office.renderChat(expired,{...paidContext,records:{...ctx.records,packageAccess:[{organization_id:'business-a',ends_at:'2020-01-01T00:00:00Z'}]}});assert.ok(all(expired).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));
+ office.selectAssistant('forge');const wrongBusiness=new Element('main');office.renderChat(wrongBusiness,{...paidContext,records:{...ctx.records,packageAccess:[{organization_id:'business-b',ends_at:new Date(Date.now()+86400000).toISOString()}]}});assert.ok(all(wrongBusiness).some(e=>e.tag==='h3'&&e.textContent.startsWith('Maya /')));
  office.selectAssistant('amara');const amara=new Element('main');office.renderChat(amara,ctx);assert.ok(all(amara).some(e=>e.tag==='h3'&&e.textContent.startsWith('Amara /')));
  office.reset();const afterLogout=new Element('main');office.renderOffice(afterLogout,ctx);assert.equal(field(afterLogout,'goals').value,'');assert.equal(byText(afterLogout,'button','Save office proposal').disabled,true);
  console.log('Office workspace checks passed: shared pricing for 381 managed selections and 4 builds; duplicate-save guard, viewer access, business isolation, ten assistants and chat-to-builder handoff.');
