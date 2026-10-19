@@ -24,6 +24,30 @@ async function main(){
  await assert.rejects(()=>api.saveRequest('business','managed',{text:'a'.repeat(61000)}),/too long/);
  queue.push({status:401,body:{message:'Expired'}});
  await assert.rejects(()=>api.logout(),/Expired/);assert.equal(api.hasSession(),false);
+ queue.push({status:200,body:{user:{id:'new-user'}}});
+ await api.signup('client@example.invalid','password');assert.equal(api.hasSession(),false);
+ assert.ok(calls.at(-1).url.includes('/signup?redirect_to=https%3A%2F%2Foffice.example%2Fworkspace.html'));
+ queue.push({status:429,body:{error_code:'over_email_send_rate_limit',msg:'Try after 34 seconds.'}});
+ await assert.rejects(()=>api.signup('client@example.invalid','password'),e=>e.status===429&&e.code==='over_email_send_rate_limit'&&e.message.includes('spam folder'));
+ // Exercise the real form handler, including rapid double submission and confirmation feedback.
+ const elements=new Map();
+ const element=id=>{if(!elements.has(id))elements.set(id,{id,hidden:false,disabled:false,textContent:'',setAttribute(){},removeAttribute(){},prepend(child){child.parent=id},insertBefore(child){child.parent=id},querySelector(){return element('auth-submit')}});return elements.get(id)};
+ const form=element('auth-form');form.elements={email:{value:'client@example.invalid'},password:{value:'password'}};
+ let finishSignup,signupCalls=0;
+ const uiApi={callback:async()=>false,hasSession:()=>false,signup:()=>{signupCalls++;return new Promise(resolve=>finishSignup=resolve)}};
+ vm.runInNewContext(fs.readFileSync(path.join(dist,'workspace.js'),'utf8'),{window:{WorkspaceAPI:uiApi,WorkspaceModel:model},document:{querySelector:selector=>element(selector.slice(1)),querySelectorAll:()=>[]}});
+ await new Promise(resolve=>setImmediate(resolve));
+ element('signup-tab').onclick();
+ const event={preventDefault(){},target:form};
+ const pending=form.onsubmit(event);await form.onsubmit(event);
+ assert.equal(signupCalls,1);assert.equal(element('signup-tab').disabled,true);
+ assert.equal(element('auth-submit').textContent,'Creating account…');
+ finishSignup({user:{id:'new-user'}});await pending;
+ assert.equal(element('auth-submit').textContent,'Sign in');
+ assert.equal(element('signup-tab').disabled,false);
+ assert.equal(element('notice').parent,'auth-form');
+ assert.ok(element('notice').textContent.includes('spam folder'));
+ assert.equal(form.elements.password.value,'');
  console.log('Workspace checks passed: counts, safe links, assets, auth session, bounded submission, server-controlled fields and local sign-out.');
 }
 main().catch(e=>{console.error(e);process.exit(1)});
