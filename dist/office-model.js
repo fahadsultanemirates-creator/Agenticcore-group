@@ -12,5 +12,6 @@ const deliveryDetails={"admin":{"output":"A formatted document or an organized a
 departments.forEach(d=>Object.assign(d,deliveryDetails[d.id]));
 const levels=[{id:'essential',name:'Essential',multiplier:1,description:'A focused monthly work allowance.'},{id:'growth',name:'Growth',multiplier:2,description:'Twice the listed allowance.'},{id:'extended',name:'Extended',multiplier:3,description:'Three times the listed allowance.'}];
 function calculate(ids,levelId){const level=levels.find(x=>x.id===levelId);if(!level)throw new Error('Unknown work level');const selected=departments.filter(x=>new Set(ids).has(x.id));const total=selected.reduce((n,d)=>n+d.price,0)*level.multiplier;return {selected,level,total,weekly:total/4,allowances:selected.map(d=>`${d.unit*level.multiplier} ${d.measure}`)}}
-const api={departments,levels,calculate};root.OfficeModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+function annual(total){if(!Number.isFinite(total)||total<0)throw new Error('Invalid cycle price');const comparison=total*13;const discounted=Math.round(comparison*80)/100;return {days:365,cycles:13,comparison,total:discounted,saving:comparison-discounted,quarterly:discounted/4}}
+const api={departments,levels,calculate,annual};root.OfficeModel=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

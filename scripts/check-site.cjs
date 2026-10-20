@@ -59,3 +59,9 @@ assert.ok(preparedBrief.includes('no recurring external actions are authorized')
 assert.ok(preparedBrief.includes('Summary time: 21:00 in the stated time zone'));
 assert.ok(preparedBrief.includes('Time zone: Asia/Dubai'));
 console.log('Onboarding checks passed: missing-input guidance, populated context, requested deadlines and approval boundaries.');
+// Annual comparison uses 13 existing cycle allowances, with one extra day included.
+for(let mask=1;mask<128;mask++)for(const level of model.levels){const ids=model.departments.filter((_,i)=>mask&(1<<i)).map(d=>d.id);const cycle=model.calculate(ids,level.id);const annual=model.annual(cycle.total);assert.equal(annual.cycles,13);assert.equal(annual.days,365);assert.equal(annual.comparison,cycle.total*13);assert.equal(annual.total,annual.comparison*.8);assert.equal(annual.quarterly*4,annual.total);assert.equal(annual.total+annual.saving,annual.comparison)}
+assert.deepEqual(model.annual(100),{days:365,cycles:13,comparison:1300,total:1040,saving:260,quarterly:260});
+assert.throws(()=>model.annual(-1));assert.throws(()=>model.annual(NaN));
+assert.ok(servicesHtml.includes('id="trial-form"'));assert.ok(servicesHtml.includes('src="trial.js"'));assert.ok(servicesHtml.includes('name="office-term"'));assert.ok(servicesHtml.includes('id="start-from-zero"'));
+console.log('Services checks passed: 381 annual estimates, quarterly totals, trial chooser and startup route.');
