@@ -1,6 +1,7 @@
 (function(root){
 'use strict';
 const services=[
+ {id:'launch_report',department:'Research',name:'A product or service launch brief',scope:'Up to two pages on one proposed product or service in one market: your supplied facts, audience assumptions, key questions and next steps. Up to three public sources where useful; source gaps are stated. No paid databases, demand guarantees or financial forecasts.'},
  {id:'captions',department:'Marketing',name:'Three social captions',scope:'Three captions, up to 100 words each, for one approved offer and one channel. Text drafts only; no publishing.'},
  {id:'script',department:'Creative',name:'One short video script',scope:'One English script for a video up to 30 seconds, using your approved business facts. Script only; no video rendering or voiceover.'},
  {id:'document',department:'Admin',name:'One one-page business document',scope:'Format or rewrite one supplied document, up to 500 source words. No legal drafting or original research.'},
