@@ -1,0 +1,260 @@
+SHARED_CSS = r"""
+*{box-sizing:border-box}body{margin:0;background:#fcfcf9;font-family:'DM Sans',Arial,sans-serif;color:#142b3a}
+.acd{--cream:#f5f3ee;--ink:#142b3a;--muted:#5d6b74;--orange:#ef793b;--line:#dfe3df;max-width:1120px;margin:0 auto;padding:28px 20px 36px}
+.acd-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.acd-head h2{margin:4px 0 0;font:800 clamp(22px,3.4vw,34px)/1.1 Manrope,sans-serif;letter-spacing:-.02em}
+.acd-head h2 em{font-style:normal;color:var(--orange)}
+.eyebrow{font:700 11px Manrope,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--orange)}
+.ctrls{display:flex;gap:8px}
+.ctrls button{font:600 13px 'DM Sans',sans-serif;border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:6px;padding:8px 13px;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;gap:6px}
+.ctrls button.pri{background:var(--ink);color:#fff}
+.ctrls button:focus-visible,.tab:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.win{position:relative;height:600px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;box-shadow:0 1px 2px rgba(20,43,58,.05),0 30px 70px -36px rgba(20,43,58,.35)}
+.badge{position:absolute;top:12px;right:12px;z-index:9;background:var(--ink);color:#fff;font:700 11px Manrope,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;border-radius:99px;display:flex;gap:6px;align-items:center}
+.badge i{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.side{width:210px;flex:none;background:var(--cream);border-right:1px solid var(--line);padding:16px 14px;display:flex;flex-direction:column;gap:12px;font-size:13px}
+.side .logo{display:flex;align-items:center;gap:9px;font:800 14px Manrope,sans-serif}
+.side .logo img{width:34px;height:34px;border-radius:8px;background:#050301}
+.side h6{margin:6px 0 0;font:700 10.5px Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.who{display:flex;align-items:center;gap:9px;line-height:1.25}.who b{display:block;font-weight:600}.who span{color:var(--muted);font-size:12px}
+.pt{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;background:#eae9e3;border:2px solid #fff;box-shadow:0 2px 6px rgba(20,43,58,.15)}
+.who.on .pt{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--orange)}
+.side .ch{margin-top:auto;font-size:11.5px;color:var(--muted);line-height:1.55;border-top:1px solid var(--line);padding-top:10px}
+.side .ch b{color:var(--ink);font-weight:600}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:52px;flex:none;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 150px 0 18px;font:700 14px Manrope,sans-serif}
+.top small{font:400 12px 'DM Sans';color:var(--muted)}
+.body{flex:1;display:flex;min-height:0}
+.chatcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.chat{flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;padding:16px 18px;font-size:14.5px;line-height:1.45}
+.m{will-change:opacity,transform}
+.u{align-self:flex-end;background:var(--ink);color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;max-width:86%;box-shadow:0 6px 16px -10px rgba(20,43,58,.6)}
+.ag{display:flex;gap:9px;align-items:flex-start;max-width:92%}.ag .pt{width:32px;height:32px}
+.ag .bb{background:var(--cream);padding:9px 13px;border-radius:4px 16px 16px 16px}
+.ag small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
+.dots{display:inline-flex;gap:4px;padding:12px 14px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:acdb 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes acdb{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.sys{align-self:center;font-size:12px;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:99px;padding:4px 11px;text-align:center}
+.comp{margin:0 14px 14px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:14px;min-height:46px}
+.comp .ph{flex:1;min-width:0}.comp .ph.empty{color:#97a2a8}
+.caret{display:inline-block;width:1.5px;height:16px;background:var(--ink);vertical-align:-3px;margin-left:1px}
+.comp .send{width:30px;height:30px;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+.panel{width:46%;flex:none;border-left:1px solid var(--line);background:linear-gradient(180deg,#fbfaf7,#f5f3ee);position:relative;overflow:hidden;opacity:var(--pk,0)}
+.view{position:absolute;inset:0;padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.ptitle{font:700 11px Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font:600 10.5px 'DM Sans';letter-spacing:0;text-transform:none;background:#fff1e8;color:#b8521d;border:1px solid #f6cdb3;border-radius:99px;padding:2px 8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;box-shadow:0 10px 24px -18px rgba(20,43,58,.45);font-size:13.5px}
+.row{display:flex;gap:10px;align-items:center}.row .tx{flex:1;min-width:0}.row .tx b{font-weight:600}.row .tx em{display:block;font-style:normal;color:var(--muted);font-size:12.5px}
+.bar{height:5px;border-radius:5px;background:#ebe8e1;overflow:hidden;margin-top:7px}.bar i{display:block;height:100%;width:0;background:var(--orange)}
+.pill{font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--cream);color:var(--muted);white-space:nowrap}
+.done .pill,.pill.ok{background:#e5f3ea;color:#21754a}
+.mini{display:flex;gap:4px;margin-top:6px}.mini span{height:4px;border-radius:3px;background:#e3dfd6}
+.toast{position:absolute;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 24px);top:auto;bottom:76px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 18px 40px -20px rgba(20,43,58,.5);font-size:14px;white-space:nowrap}
+.toast .ic{width:28px;height:28px;border-radius:8px;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:700}
+.toast em{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}
+.cap{position:absolute;inset:0;z-index:7;display:grid;place-items:center;background:rgba(20,43,58,.86);color:#fff;text-align:center;padding:24px}
+.cap h3{margin:0 0 10px;font:800 clamp(24px,4vw,40px)/1.15 Manrope,sans-serif;letter-spacing:-.02em}
+.cap p{margin:0;font-size:clamp(14px,1.8vw,17px);color:#f3d9c9}
+.cap img{width:46px;height:46px;border-radius:10px;margin-bottom:14px;background:#050301}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.tab{all:unset;cursor:pointer;position:relative;padding-top:13px;font:600 13.5px Manrope,sans-serif;color:var(--muted)}
+.tab::before,.tab .fill{content:"";position:absolute;left:0;top:0;height:3px;border-radius:3px}
+.tab::before{right:0;background:var(--line)}.tab .fill{background:var(--orange);width:0}
+.tab.act{color:var(--ink)}.tab span{color:var(--orange);margin-right:6px}
+.note{font-size:12px;color:var(--muted);margin-top:12px}
+.static .chat{overflow-y:auto;justify-content:flex-start}.static .cap{inset:auto 0 0 0;padding:14px 16px;background:var(--ink)}.static .cap img{display:none}.static .cap h3{font-size:20px;margin-bottom:4px}.static .cap p{font-size:13.5px}.static .body{padding-bottom:86px}
+@media (max-width:900px){.side{display:none}}
+@media (max-width:700px){
+ .acd{padding:16px 12px 24px}.win{height:660px;border-radius:14px}.card{padding:9px 11px}.inv table td{padding:2px 0}
+ .top{padding:0 12px;height:auto;min-height:48px;padding-top:40px;padding-bottom:8px}
+ .badge{left:12px;right:auto;top:10px}
+ .body{flex-direction:column}.chatcol{flex:1;min-height:0}
+ .comp{display:none}
+ .panel{width:auto;border-left:0;border-top:1px solid var(--line);opacity:1;height:calc(var(--pk,0) * 70%);flex:none}
+ .chat{padding:12px;font-size:14px}
+ .view{padding:12px}
+ .toast{top:auto;bottom:12px;white-space:normal;width:auto;left:12px;right:12px}
+ .tabs{gap:6px}.tab{font-size:0;padding-top:8px}.tab span{font-size:0}
+ .tabs .cur{display:block}
+ .static .win{height:auto;flex-direction:column}.static .pages{flex-direction:column;gap:10px}.static .chat{overflow:visible}.static .panel{height:auto}.static .view{position:static}.static .cap{position:static}.static .body{padding-bottom:0}
+}
+.curlab{display:none;font:700 14px Manrope,sans-serif;margin-top:8px}.curlab span{color:var(--orange);margin-right:6px}
+@media (max-width:700px){.curlab{display:block}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.6}}
+"""
+
+SHARED_JS = r"""
+(function(){
+ var R=document.querySelector('.acd'),L=+R.dataset.len,ST=L/4,PO=+R.dataset.panel;
+ function q(s){return [].slice.call(R.querySelectorAll(s))}
+ var els=q('[data-at]'),fills=q('[data-fill]'),ticks=q('[data-tick]'),slides=q('[data-slide]'),hl=q('[data-on]'),tabs=q('.tab'),types=q('[data-type]');
+ var comp=R.querySelector('.comp .ph'),cur=R.querySelector('.curlab'),btnP=R.querySelector('[data-c=play]'),btnR=R.querySelector('[data-c=replay]');
+ var labels=tabs.map(function(b){return b.innerHTML.replace(/<i[^>]*><\/i>/,'')});
+ function cl(x){return x<0?0:x>1?1:x}function ease(x){return 1-Math.pow(1-x,3)}
+ var isStatic=false;
+ function render(t){
+  els.forEach(function(e){var a=+e.dataset.at,u=e.dataset.until?+e.dataset.until:1e9,vis=isStatic?(e.dataset.st!=='0'):(t>=a&&t<u);
+   e.style.display=vis?'':'none';if(vis){var k=isStatic?1:ease(cl((t-a)/.45));e.style.opacity=k;e.style.transform='translateY('+(10*(1-k))+'px)'}});
+  fills.forEach(function(e){var p=e.dataset.fill.split(',');e.style.width=(isStatic?100:cl((t-p[0])/(p[1]-p[0]))*100)+'%'});
+  ticks.forEach(function(e){e.classList.toggle('done',isStatic||t>=+e.dataset.tick);var lab=e.querySelector('[data-lab]');if(lab){var l=lab.dataset.lab.split('|');lab.textContent=(isStatic||t>=+e.dataset.tick)?l[1]:l[0]}});
+  hl.forEach(function(e){var p=e.dataset.on.split(',');e.classList.toggle('on',t>=+p[0]&&t<+p[1])});
+  var mob=matchMedia('(max-width:700px)').matches;
+  slides.forEach(function(e){var k=mob&&!isStatic?ease(cl((t-e.dataset.slide)/.6)):0;e.style.transform='translateX(-'+(k*100)+'%)'});
+  R.style.setProperty('--pk',isStatic?1:ease(cl((t-PO)/.6)));
+  var txt='';types.forEach(function(e){var p=e.dataset.type.split(','),a=+p[0],b=+p[1];if(t>=a&&t<b+.25){var s=e.dataset.text;txt=s.slice(0,Math.round(cl((t-a)/(b-a))*s.length))}});
+  if(comp){comp.className='ph'+(txt?'':' empty');comp.innerHTML=txt?txt.replace(/&/g,'&amp;').replace(/</g,'&lt;')+(Math.floor(t*2)%2?'':'<span class="caret"></span>'):'Message Maya…'}
+  var s=Math.min(3,Math.floor(t/ST));tabs.forEach(function(b,i){b.classList.toggle('act',i===s);b.setAttribute('aria-selected',i===s);b.querySelector('.fill').style.width=(isStatic?100:i<s?100:i===s?cl((t-i*ST)/ST)*100:0)+'%'});
+  if(cur)cur.innerHTML=labels[s];
+ }
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,playing=!reduce,visible=true,t=0,last=null,manual=false;
+ function setBtn(){btnP.innerHTML=playing?'❚❚ Pause':'▶ Play';btnP.setAttribute('aria-pressed',!playing)}
+ function staticScene(){isStatic=true;R.classList.add('static');render(L-0.01)}
+ function live(){if(isStatic){isStatic=false;R.classList.remove('static')}}
+ btnP.onclick=function(){live();playing=!playing;last=null;setBtn()};
+ btnR.onclick=function(){live();t=0;playing=true;last=null;setBtn();render(0)};
+ tabs.forEach(function(b,i){b.onclick=function(){live();t=i*ST+.01;last=null;render(t)}});
+ window.__acdSeek=function(x){manual=true;live();render(x)};
+ if('IntersectionObserver' in window)new IntersectionObserver(function(e){visible=e[0].isIntersecting;last=null}).observe(R);
+ setBtn();
+ if(reduce){staticScene()}else render(0);
+ function loop(now){if(!manual&&playing&&visible&&!document.hidden){if(last!==null){t=(t+(now-last)/1000)%L;render(t)}last=now}else last=null;requestAnimationFrame(loop)}
+ requestAnimationFrame(loop);
+})();
+"""
+
+def page(title, h2, eyebrow, aria, side, top, chat, panel, cap, tabs, note, length, popen):
+    tabs_html=''.join(f'<button class="tab" role="tab" aria-selected="false"><i class="fill"></i><span>{i+1}</span>{t}</button>' for i,t in enumerate(tabs))
+    return f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{title} · AgenticCore.group (preview)</title><meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>{SHARED_CSS}{EXTRA_CSS}</style></head><body>
+<section class="acd" data-len="{length}" data-panel="{popen}" aria-label="{title}">
+<div class="acd-head"><div><div class="eyebrow">{eyebrow}</div><h2>{h2}</h2></div>
+<div class="ctrls" role="group" aria-label="Animation controls"><button class="pri" data-c="play" type="button">❚❚ Pause</button><button data-c="replay" type="button">↺ Replay</button></div></div>
+<div class="win" role="img" aria-label="{aria}">
+<div class="badge"><i></i>Illustrative workflow</div>
+<aside class="side" aria-hidden="true">{side}</aside>
+<div class="main"><div class="top">{top}</div><div class="body">
+<div class="chatcol"><div class="chat" aria-hidden="true">{chat}</div><div class="comp" aria-hidden="true"><div class="ph empty"></div><div class="send">↑</div></div></div>
+<div class="panel" aria-hidden="true">{panel}</div></div></div>
+{cap}
+</div>
+<div class="tabs" role="tablist" aria-label="Stages">{tabs_html}</div><div class="curlab" aria-hidden="true"></div>
+<p class="note">{note}</p>
+</section><script>{SHARED_JS}</script></body></html>'''
+
+SIDE_COMMON='''<div class="logo"><img src="assets/logo.webp" alt="">AgenticCore.group</div>
+<h6>Your contact</h6><div class="who" data-on="0,99"><img class="pt" src="assets/maya.webp" alt=""><div><b>Maya</b><span>Client coordinator</span></div></div>
+{extra}
+<h6>Brand leader</h6><div class="who"><img class="pt" src="assets/forge.webp" alt=""><div><b>Forge</b><span>AI CEO · leads the brand</span></div></div>
+<div class="ch"><b>WhatsApp</b> · enquiries, updates &amp; delivery links (planned)<br><b>Telegram</b> · internal team coordination<br><b>Dashboard</b> · requests, approvals &amp; deliverables</div>'''
+
+EXTRA_CSS=r"""
+.spec .pt{width:38px;height:38px}
+.pages{display:flex;gap:12px;flex:1;min-height:0;transition:none}
+.pg{flex:1 0 0;min-width:0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 14px 12px;box-shadow:0 18px 30px -22px rgba(20,43,58,.55);font-size:12.5px;line-height:1.4;position:relative}
+.pg h4{margin:0 0 2px;font:800 15px Manrope,sans-serif}.pg .sub{color:var(--muted);font-size:11.5px;margin-bottom:8px}
+.pg h5{margin:10px 0 4px;font:700 11px Manrope,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--orange)}
+.pg ul{margin:0;padding-left:16px}.pg li{margin:2px 0}
+.pg .no{position:absolute;right:10px;bottom:8px;font-size:10.5px;color:var(--muted)}
+.pg.on{box-shadow:0 0 0 2px var(--orange),0 18px 30px -22px rgba(20,43,58,.55)}
+.pagewrap{flex:1;min-height:0;overflow:hidden}
+.chk{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid #eeece6;font-size:13.5px}
+.chk:last-child{border:0}.chk .bx{width:20px;height:20px;border-radius:6px;border:1.5px solid #c9cfcb;display:grid;place-items:center;font-size:12px;color:#fff;flex:none}
+.chk.done .bx{background:#21754a;border-color:#21754a}.chk.done .bx::after{content:"✓"}
+.flow{display:flex;flex-direction:column;gap:0}
+.node{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13.5px}
+.node .n{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font:700 11px Manrope;display:grid;place-items:center;flex:none}
+.link{width:2px;height:12px;background:var(--line);margin-left:21px;position:relative;overflow:hidden}.link i{position:absolute;left:0;top:0;width:100%;height:0;background:var(--orange)}
+.folder{display:flex;gap:10px;align-items:center;background:#fff;border:1.5px dashed var(--orange);border-radius:12px;padding:9px 12px;font-size:13.5px}
+.folder .fi{width:30px;height:24px;background:#f7c9a9;border-radius:3px 6px 6px 6px;position:relative;flex:none}.folder .fi::before{content:"";position:absolute;left:0;top:-5px;width:13px;height:6px;background:#f7c9a9;border-radius:3px 3px 0 0}
+.duo{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}.duo .pt{width:30px;height:30px}.duo .pt+.pt{margin-left:-12px}
+.inv{font-size:12.5px}.inv h4{margin:0;font:800 14px Manrope}.inv table{width:100%;border-collapse:collapse;margin-top:6px}.inv td{padding:3px 0;border-bottom:1px solid #f0eee8}.inv td+td{text-align:right;color:var(--muted)}
+.approve{align-self:flex-start;background:var(--ink);color:#fff;border-radius:8px;padding:8px 14px;font:600 13px 'DM Sans'}
+.approve.done{background:#21754a}
+@media (max-width:700px){.inv tr:nth-child(2){display:none}.row .pill{display:none}.ptitle{font-size:10.5px}.pagewrap .pages{gap:0}.pg{flex:0 0 100%}.view{gap:8px}.node{padding:6px 10px;font-size:13px}.link{height:7px}.chk{padding:5px 0;font-size:13px}}
+"""
+
+def spec(img,name,role,task,prev,a,f0,f1):
+    return f'''<div class="card m spec" data-at="{a}" data-tick="{f1}"><div class="row"><img class="pt" src="assets/{img}.webp" alt=""><div class="tx"><b>{name}</b> · {role}<em>{task}</em></div><span class="pill" data-lab="Preparing sample|Sample ready"></span></div>
+<div class="bar"><i data-fill="{f0},{f1}"></i></div><div style="font-size:12.5px;color:#5d6b74;margin-top:6px">{prev}</div></div>'''
+
+MAYA=lambda txt,a,u='',lab='Maya · Client coordinator': f'<div class="m ag" data-at="{a}"{(" data-until=%s"%u) if u else ""}><img class="pt" src="assets/maya.webp" alt=""><div class="bb"><small>{lab}</small>{txt}</div></div>'
+DOTS=lambda a,u: f'<div class="m ag" data-at="{a}" data-until="{u}" data-st="0"><img class="pt" src="assets/maya.webp" alt=""><div class="bb dots"><i></i><i></i><i></i></div></div>'
+CAP=lambda a,h,p: f'<div class="cap m" data-at="{a}"><div><img src="assets/logo.webp" alt=""><h3>{h}</h3><p>{p}</p></div></div>'
+NOTE='Illustrative workflow with fictional business details. AI characters represent specialist roles, not human employees. Nothing shown is connected to live accounts.'
+
+# ---------- DEMO 1 ----------
+P1='Maya, I want to launch a home-based meal-prep service. Help me understand where to begin.'
+c1=f'''<span data-type="0.4,2.6" data-text="{P1}"></span>
+<div class="sys m" data-at="0">Dashboard · new request</div>
+<div class="m u" data-at="2.8">{P1}</div>{DOTS(3.3,4.6)}
+{MAYA("Let’s clarify your audience, location and first offer. We can start with a short launch brief.",4.6)}
+{MAYA("I’ll gather sample inputs from three specialist roles for your brief.",7.4)}
+{MAYA("Your two-page launch brief draft is ready in the panel.",14.6)}
+<div class="sys m" data-at="21.4">You are reviewing the brief</div>
+<div class="m u" data-at="22.8">Clear and practical. Let’s test the first offer next.</div>'''
+p1=f'''<div class="view m" data-at="7.6" data-until="14.3" data-st="0"><div class="ptitle">Maya is coordinating <span class="tag">Sample outputs — not live work</span></div>
+{spec("sage","Sage","Research","Audience assumptions &amp; questions to investigate","Who orders weekly? · Dietary needs? · Pickup or delivery?",8.2,8.4,10.0)}
+{spec("nova","Nova","Creative","Initial offer presentation","3-slide outline · “Starter week” offer idea",9.4,9.6,11.2)}
+{spec("iris","Iris","Operations","Practical next-step checklist","Food-business rules check · Costing worksheet · Feedback round",10.6,10.8,12.4)}</div>
+<div class="view m" data-at="14.3"><div class="ptitle">Launch brief · draft v1 <span class="tag">Sample document</span></div>
+<div class="pagewrap"><div class="pages" data-slide="18.4">
+<div class="pg" data-on="21.4,23.4"><h4>Home meal-prep launch brief</h4><div class="sub">Fictional client · prepared for review</div>
+<h5>The idea &amp; supplied facts</h5><ul><li>Weekly home-cooked meals, prepared from a home kitchen</li><li>Supplied: based in a mid-sized town; already cooks for friends</li><li>Goal: understand where to begin</li></ul>
+<h5>Assumptions to test</h5><ul><li>Busy local households want weekly meals</li><li>Pickup suits a first version better than delivery</li><li>A small fixed menu is enough to start</li></ul><span class="no">1 / 2</span></div>
+<div class="pg" data-on="23.4,25.2"><h4>Questions &amp; next steps</h4><div class="sub">Launch brief · continued</div>
+<h5>Open questions</h5><ul><li>Which local food-business rules apply?</li><li>Families or professionals first?</li><li>How many meals can be prepared safely each week?</li></ul>
+<h5>Practical next steps</h5><ul><li>Confirm registration requirements</li><li>Draft a starter-week offer</li><li>Ask five households for feedback</li><li>Review this brief with Maya</li></ul><span class="no">2 / 2</span></div>
+</div></div></div>
+<div class="toast m" data-at="17.2" data-until="21.2" data-st="0"><div class="ic">✓</div><div>Your draft is ready to review.<em>Sample notification · Dashboard</em></div></div>'''
+side1=SIDE_COMMON.format(extra='''<h6>Specialist roles</h6>
+<div class="who" data-on="8.2,14.3"><img class="pt" src="assets/sage.webp" alt=""><div><b>Sage</b><span>Research</span></div></div>
+<div class="who" data-on="9.4,14.3"><img class="pt" src="assets/nova.webp" alt=""><div><b>Nova</b><span>Creative</span></div></div>
+<div class="who" data-on="10.6,14.3"><img class="pt" src="assets/iris.webp" alt=""><div><b>Iris</b><span>Operations</span></div></div>''')
+d1=page('Your idea. Your digital office.','Your idea. <em>Your digital office.</em>','Demonstration 1',
+ 'Illustrative workflow: a client asks Maya for help launching a home-based meal-prep service. Maya coordinates sample inputs from Research, Creative and Operations roles, a two-page launch brief draft is shown, and the client reviews it. Ends with: Start with a 7-day free trial. Up to two small deliverables, no card, scope confirmed first.',
+ side1,'<img class="pt" src="assets/maya.webp" alt="" style="width:28px;height:28px">Meal-prep idea <small>· Maya · Dashboard thread</small>',c1,p1,
+ CAP(24.6,'Start with a 7-day free trial.','Up to two small deliverables · No card · Scope confirmed first.'),
+ ["The client’s idea","The team contributes","A useful result","The next step"],NOTE,28,7.6)
+open('demo1/index.html','w').write(d1)
+
+# ---------- DEMO 2 ----------
+P2='We already have a website. We want our files organized and an invoice-and-alert workflow for confirmed orders.'
+c2=f'''<span data-type="0.4,2.8" data-text="{P2}"></span>
+<div class="sys m" data-at="0">Dashboard · new request</div>
+<div class="m u" data-at="3.0">{P2}</div>{DOTS(3.5,4.8)}
+{MAYA("Let’s agree the workflow, accounts, permissions and approval rules before connecting anything.",4.8)}
+{MAYA("Atlas will help us map the framework. Nothing is connected yet.",7.4)}
+{MAYA("Here is the scope for your review and approval.",14.6)}
+<div class="m u" data-at="19.4">Approved. Please proceed with the scoped build.</div>
+{MAYA("After integration, a confirmed order would run like this:",21.6)}'''
+nodes=["Website event · order confirmed","Checked order details","Invoice","Authorised email","Recorded result"]
+fl=''
+for i,n in enumerate(nodes):
+    a=8.4+i*0.8
+    if i: fl+=f'<div class="link m" data-at="{a-.3}"><i data-fill="{a-.3},{a}" style="width:100%;height:auto;bottom:0"></i></div>'
+    fl+=f'<div class="node m" data-at="{a}"><span class="n">{i+1}</span>{n}</div>'
+rev=[("Workflow scope","Which events, checks and outputs are included"),("Account ownership","Your accounts, your storage, your data"),("Approval rules","What needs your sign-off before sending"),("Failure notifications","Who is told if a step fails, and how"),("Running costs and handover","Billed separately · documented handover")]
+rv=''.join(f'<div class="chk" data-tick="{15.2+i*.7:.1f}"><span class="bx"></span><div class="tx"><b>{a}</b><em style="display:block;font-style:normal;color:#5d6b74;font-size:12px">{b}</em></div></div>' for i,(a,b) in enumerate(rev))
+p2=f'''<div class="view m" data-at="7.6" data-until="14.3" data-st="0"><div class="ptitle">Workflow framework <span class="tag">Planned · not connected</span></div>
+<div class="duo"><img class="pt" src="assets/maya.webp" alt=""><img class="pt" src="assets/atlas.webp" alt="">Maya &amp; Atlas · arranging the flow</div>
+<div class="flow">{fl}</div>
+<div class="folder m" data-at="12.4"><span class="fi"></span><div class="tx"><b>Your business account</b><em style="display:block;font-style:normal;color:#5d6b74;font-size:12px">Client-owned storage folder · organised files stay yours</em></div></div></div>
+<div class="view m" data-at="14.3" data-until="21.3" data-st="0"><div class="ptitle">Owner review <span class="tag">Before anything is connected</span></div>
+<div class="card">{rv}</div><div class="approve" data-tick="19.0"><span data-lab="Approve scope|✓ Scope approved"></span></div></div>
+<div class="view m" data-at="21.3"><div class="ptitle">Example workflow after integration <span class="tag">Example only</span></div>
+<div class="card inv m" data-at="21.9"><h4>Invoice draft · INV-0001</h4><div style="color:#5d6b74;font-size:12px">Fern &amp; Fold Stationery (fictional) · Order #1042</div>
+<table><tr><td>Items</td><td>As confirmed in the order</td></tr><tr><td>Totals</td><td>Calculated from order details</td></tr><tr><td>Status</td><td>Checked · ready for authorised email</td></tr></table></div>
+<div class="card m" data-at="22.9"><div class="row"><span class="pt" style="display:grid;place-items:center;background:#142b3a;color:#fff;font-weight:700">✉</span><div class="tx"><b>Email result record</b><em>Sent with your authorised template · logged in Dashboard</em></div><span class="pill ok">Recorded</span></div></div>
+<div class="card m" data-at="23.9"><div class="row"><span class="pt" style="display:grid;place-items:center;background:#25a366;color:#fff;font-weight:700">✓</span><div class="tx"><b>Owner update</b><em>Via WhatsApp once set up · “Invoice sent for Order #1042”</em></div><span class="pill">Example</span></div></div></div>'''
+side2=SIDE_COMMON.format(extra='''<h6>Technology</h6>
+<div class="who" data-on="7.4,14.3"><img class="pt" src="assets/atlas.webp" alt=""><div><b>Atlas</b><span>Websites, apps &amp; automation</span></div></div>''')
+d2=page('An office built for your company.','An office built for <em>your company.</em>','Demonstration 2',
+ 'Illustrative workflow: a business asks Maya to organise files and plan an invoice-and-alert workflow for confirmed orders. Maya and Atlas arrange the workflow and a client-owned storage folder, the owner reviews scope, ownership, approval rules, failure notifications, running costs and handover, then an example of the workflow after integration is shown. Ends with: Your company. Your digital office. Scoped build, agreed handover, running costs separate.',
+ side2,'<img class="pt" src="assets/maya.webp" alt="" style="width:28px;height:28px">Orders workflow <small>· Maya · Dashboard thread</small>',c2,p2,
+ CAP(25.2,'Your company. Your digital office.','Scoped build · Agreed handover · Running costs separate.'),
+ ["The business request","Design the framework","Review and approve","The planned experience"],NOTE,28,7.6)
+open('demo2/index.html','w').write(d2)
