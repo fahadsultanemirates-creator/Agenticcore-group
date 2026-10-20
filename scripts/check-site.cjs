@@ -5,13 +5,19 @@ const {spawnSync} = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const dist = path.join(root, 'dist');
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
-const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(x => x[1]);
-assert.equal(new Set(ids).size, ids.length, 'HTML IDs must be unique');
-for (const [, anchor] of html.matchAll(/href="#([^"]+)"/g)) {
-  assert.ok(ids.includes(anchor), `Missing anchor: ${anchor}`);
-}
-for (const [, asset] of html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css|png))"/g)) {
-  if (!asset.startsWith('http')) assert.ok(fs.existsSync(path.join(dist, asset)), `Missing asset: ${asset}`);
+const servicesHtml = fs.readFileSync(path.join(dist, 'services.html'), 'utf8');
+for(const name of ['index.html','services.html','workspace.html',...fs.readdirSync(path.join(dist,'samples')).map(n=>'samples/'+n)]) {
+ const page=fs.readFileSync(path.join(dist,name),'utf8');
+ const ids=[...page.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
+ assert.equal(new Set(ids).size,ids.length,`Duplicate IDs: ${name}`);
+ for(const [,url] of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
+  if(/^(https?:|data:|mailto:|tel:)/.test(url)||url==='#')continue;
+  const [pathname,anchor]=url.split('#');
+  const target=pathname?path.resolve(url.startsWith('/')?dist:path.dirname(path.join(dist,name)),pathname.replace(/^\//,'')||'index.html'):path.join(dist,name);
+  const file=pathname==='/'?path.join(dist,'index.html'):target;
+  assert.ok(fs.existsSync(file),`Missing target ${url} in ${name}`);
+  if(anchor){const content=file===path.join(dist,name)?page:fs.readFileSync(file,'utf8');assert.ok(content.includes('id="'+anchor+'"'),`Missing anchor ${url} in ${name}`)}
+ }
 }
 for (const file of fs.readdirSync(dist).filter(x => x.endsWith('.js'))) {
   const check = spawnSync(process.execPath, ['--check', path.join(dist, file)], {encoding:'utf8'});
@@ -33,7 +39,7 @@ for (let mask=0;mask<128;mask++) for (const level of model.levels) {
   cases++;
 }
 assert.throws(()=>model.calculate(['admin'],'unknown'));
-assert.ok(html.includes('name="serviceRoute"'), 'Both service routes must be selectable');
+assert.ok(servicesHtml.includes('name="serviceRoute"'), 'Both service routes must be selectable');
 const app=fs.readFileSync(path.join(dist,'app.js'),'utf8');
 assert.ok(app.includes('window.ownedOfficeSelection:window.officeSelection'), 'Brief must use the selected route');
 assert.ok(!app.includes('fetch('), 'Assessment must remain local until a submission backend is implemented');

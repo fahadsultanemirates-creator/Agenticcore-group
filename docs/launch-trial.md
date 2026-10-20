@@ -12,4 +12,6 @@ Operator workflow:
 
 No server-side trial activation, quota entitlement, countdown, automatic expiry, billing or external task execution is implemented here. The trial never writes `office_package_access`; Forge remains gated by actual active-package records. Stored request metadata indicates the requested offer, not acceptance. Eligibility is reviewed manually.
 
-The six deliverable definitions and terms live in `dist/trial-model.js`, shared by the landing page, request import and signed-in AI service catalogue. Browser visuals and a real signed-in trial submission still require confirmation.
+The seven deliverable definitions and terms live in `dist/trial-model.js`, shared by the landing page, request import and signed-in AI service catalogue. Browser visuals and a real signed-in trial submission still require confirmation.
+
+The trial now includes a short product/service launch brief from Research. Its bounds are two pages, one idea, one market and up to three public sources where useful. Assumptions and source gaps must be stated. The public homepage provides fictional static sample documents; they are not client research or proof of connected execution.
