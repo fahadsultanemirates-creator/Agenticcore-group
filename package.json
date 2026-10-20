@@ -4,7 +4,7 @@
   "private": true,
   "description": "Agenticcore Group digital office concept website",
   "scripts": {
-    "check": "node scripts/check-site.cjs && node scripts/check-home.cjs && node scripts/check-workspace.cjs && node scripts/check-onboarding-endpoint.cjs && node scripts/check-office-workspace.cjs && node scripts/check-live-chat.mjs && node scripts/check-chat-files.mjs && node scripts/check-file-bridge.mjs"
+    "check": "node scripts/check-site.cjs && node scripts/check-home.cjs && node scripts/check-office-demos.cjs && node scripts/check-workspace.cjs && node scripts/check-onboarding-endpoint.cjs && node scripts/check-office-workspace.cjs && node scripts/check-live-chat.mjs && node scripts/check-chat-files.mjs && node scripts/check-file-bridge.mjs"
   },
   "dependencies": {
     "openai": "7.39.0"
