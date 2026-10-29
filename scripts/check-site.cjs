@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '..');
 const dist = path.join(root, 'dist');
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 const servicesHtml = fs.readFileSync(path.join(dist, 'services.html'), 'utf8');
-for(const name of ['index.html','services.html','workspace.html','office-demos/managed.html','office-demos/owned.html',...fs.readdirSync(path.join(dist,'samples')).map(n=>'samples/'+n)]) {
+for(const name of ['index.html','services.html','payments.html','workspace.html','office-demos/managed.html','office-demos/owned.html',...fs.readdirSync(path.join(dist,'samples')).map(n=>'samples/'+n)]) {
  const page=fs.readFileSync(path.join(dist,name),'utf8');
  const ids=[...page.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
  assert.equal(new Set(ids).size,ids.length,`Duplicate IDs: ${name}`);
