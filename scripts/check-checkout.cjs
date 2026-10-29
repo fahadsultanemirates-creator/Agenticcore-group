@@ -10,3 +10,5 @@ for(const p of packages){const q=quote({route:'owned',packageId:p.id},'ac','inst
 for(const c of [{route:'managed',departments:[],level:'essential'},{route:'managed',departments:['marketing','marketing'],level:'essential'},{route:'managed',departments:['fake'],level:'essential'},{route:'owned',packageId:'fake'}])assert.throws(()=>quote(c,'usdt','full',model,packages));
 const api=fs.readFileSync('dist/workspace-api.js','utf8');assert.ok(api.includes('async createOrder'));assert.ok(api.includes('transaction_hash:hash.toLowerCase()'));const sql=fs.readFileSync('backend/checkout-schema.sql','utf8');assert.ok(sql.includes('enable row level security'));assert.ok(sql.includes("new.status:='needs_scope'"));assert.ok(!sql.toLowerCase().includes('security definer'));assert.ok(sql.includes("o.status='awaiting_payment'"));
 console.log('Checkout checks passed: '+cases+' managed price/schedule/discount combinations, framework totals, invalid selections and protected persistence.');
+
+assert.equal(require('../dist/checkout-model.js').acTokens(9000),'150000000.000000');assert.equal(require('../dist/checkout-model.js').acTokens(4500),'75000000.000000');
