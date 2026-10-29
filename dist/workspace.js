@@ -51,6 +51,7 @@ async function initialize(){
  if(!organizations.length){show('setup-panel');return}
  organization=organizations.find(o=>o.id===organization?.id)||organizations[0];
  const select=$('#business-switch');select.replaceChildren(...organizations.map(o=>{const option=node('option',o.name);option.value=o.id;return option}));select.value=organization.id;select.hidden=organizations.length<2;
+ if(new URLSearchParams(location.search||'').get('next')==='checkout'){location.href='checkout.html';return}
  await load();show('dashboard');
  try{if(sessionStorage.getItem('agenticcore.pendingBrief'))notice('Your starting brief is ready. Choose New request to review it before submitting. Trial requests need acceptance and a confirmed start date.')}catch{}
  }catch(e){user=null;show('auth-panel');notice(e.message)}

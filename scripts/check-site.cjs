@@ -6,13 +6,13 @@ const root = path.resolve(__dirname, '..');
 const dist = path.join(root, 'dist');
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 const servicesHtml = fs.readFileSync(path.join(dist, 'services.html'), 'utf8');
-for(const name of ['index.html','services.html','payments.html','workspace.html','office-demos/managed.html','office-demos/owned.html',...fs.readdirSync(path.join(dist,'samples')).map(n=>'samples/'+n)]) {
+for(const name of ['index.html','services.html','payments.html','checkout.html','workspace.html','office-demos/managed.html','office-demos/owned.html',...fs.readdirSync(path.join(dist,'samples')).map(n=>'samples/'+n)]) {
  const page=fs.readFileSync(path.join(dist,name),'utf8');
  const ids=[...page.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
  assert.equal(new Set(ids).size,ids.length,`Duplicate IDs: ${name}`);
  for(const [,url] of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
   if(/^(https?:|data:|mailto:|tel:)/.test(url)||url==='#')continue;
-  const [pathname,anchor]=url.split('#');
+  const [rawPath,anchor]=url.split('#');const pathname=rawPath.split('?')[0];
   const target=pathname?path.resolve(url.startsWith('/')?dist:path.dirname(path.join(dist,name)),pathname.replace(/^\//,'')||'index.html'):path.join(dist,name);
   const file=pathname==='/'?path.join(dist,'index.html'):target;
   assert.ok(fs.existsSync(file),`Missing target ${url} in ${name}`);

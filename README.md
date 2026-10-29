@@ -29,3 +29,9 @@ The office illustration and character board are generated concept artwork. Forge
 ## Operating specification
 
 See `docs/office-delivery-spec.md` for the two service routes, proposed build milestones, handover and maintenance boundaries, and implementation gates.
+
+## Service checkout
+
+`checkout.html` selects managed departments or a framework, calculates annual and AC Token discounts, creates a signed-in business order and records a transaction hash for manual verification. Orders and proofs are isolated by Supabase RLS. Database insert triggers recalculate totals; clients cannot set totals or payment status. `backend/checkout-schema.sql` is the applied schema reference. Custom frameworks enter scope review before payment. No automatic wallet charge, on-chain verification, renewal or package entitlement is granted. AC Token quantities are agreed manually; do not equate token units with USD.
+
+Staff approve custom scope by changing an order to `awaiting_payment` through trusted administration, and verify funds before setting `paid`. Later installments are coordinated with the team; checkout currently records the initial installment or full invoice. Customer transaction hashes are claims, never proof of receipt.

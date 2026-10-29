@@ -7,5 +7,6 @@ packages.forEach((p,i)=>{const label=document.createElement('label');label.class
 function syncRoute(){const owned=form.elements.serviceRoute.value==='owned';form.elements.goal.placeholder=owned?'Your departments, workflows, preferred systems and build goals':'Your priority, deadline, or an example of the work you need';form.elements.relationship.replaceChildren();(owned?['Four milestone payments','Full build upfront','Help me decide']:['Four weekly payments','Full 28-day cycle upfront','Annual plan · four quarterly payments','Help me decide']).forEach(t=>{const o=document.createElement('option');o.textContent=t;form.elements.relationship.append(o)})}
 form.elements.serviceRoute.addEventListener('change',syncRoute);
 document.querySelector('#owned-start').onclick=()=>{render();openAssessment();form.elements.serviceRoute.value='owned';syncRoute();form.elements.goal.placeholder='Your company’s departments, workflows, preferred systems and build goals'};
+document.querySelector('#checkout-owned').onclick=()=>{sessionStorage.setItem('agenticcore.checkout.v1',JSON.stringify({configuration:{route:'owned',packageId:selected.id}}));location.href='checkout.html'};
 render();syncRoute();
 })();

@@ -30,6 +30,10 @@ async function callback(){
 const apiObject={
  hasSession:()=>!!session,
  callback,
+ async createOrder(order){return api('/rest/v1/office_orders',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(order)})},
+ async orders(org){return api('/rest/v1/office_orders?select=*,office_payment_submissions(id,transaction_hash,created_at)&organization_id=eq.'+encodeURIComponent(org)+'&order=created_at.desc&limit=100')},
+ async paymentSubmissions(order){return api('/rest/v1/office_payment_submissions?select=id,transaction_hash,created_at&order_id=eq.'+encodeURIComponent(order)+'&order=created_at.desc')},
+ async submitPayment(order,hash){return api('/rest/v1/office_payment_submissions',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({order_id:order,transaction_hash:hash.toLowerCase()})})},
  async user(){return api('/auth/v1/user')},
  async login(email,password){keep(await raw('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})}));return api('/auth/v1/user')},
  async signup(email,password){const data=await raw('/auth/v1/signup?redirect_to='+encodeURIComponent(location.origin+'/workspace.html'),{method:'POST',body:JSON.stringify({email,password})});if(data?.access_token)keep(data);return data},

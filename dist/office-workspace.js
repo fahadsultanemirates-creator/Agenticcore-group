@@ -44,6 +44,7 @@ function renderOffice(target,ctx){
    else summary.append(node('p',s.scope),node('p',s.delivery),node('p','Ongoing API, hosting and required third-party costs are paid separately. Maintenance is optional. Scope, handover and support terms are confirmed before work.','fine'));
    save.disabled=saving||ctx.role==='viewer'
   }catch(e){summary.append(node('p',e.message));save.disabled=true}
+  const checkout=button('Review order & checkout →',()=>{sessionStorage.setItem('agenticcore.checkout.v1',JSON.stringify({configuration:{...draft,term:'cycle'},requirements:draft.goals}));location.href='checkout.html'},'dark');checkout.disabled=save.disabled;summary.append(checkout);
   summary.append(node('p','Proposed estimate · awaiting scope confirmation. No payment is collected here.','fine'));
  }
  route.onchange=()=>{draft.route=route.value;update()};
