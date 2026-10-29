@@ -2,7 +2,9 @@
 'use strict';
 const $=s=>document.querySelector(s),api=window.WorkspaceAPI,model=window.WorkspaceModel;
 let user=null,organizations=[],organization=null,role=null,tab='overview',mode='login',recovery=false;
-let importedTrial=null;
+let importedTrial=null,checkoutOrder=null;
+$('#order-services').onclick=()=>{checkoutOrder=null;tab='shop';render()};
+window.addEventListener?.('message',event=>{const frame=document.getElementById('dashboard-checkout');if(!frame||event.origin!==location.origin||event.source!==frame.contentWindow||event.data?.type!=='group-checkout-height')return;const height=event.data.height;if(Number.isFinite(height)&&height>=400&&height<=20000)frame.style.height=Math.ceil(height)+'px'});
 let records={requests:[],projects:[],milestones:[],deliverables:[],updates:[]};
 const assistantLink=new URLSearchParams(location.search||'').get('assistant');
 if(window.OfficeAssistantModel?.team.some(p=>p.id===assistantLink)){tab='team';window.OfficeWorkspace.selectAssistant(assistantLink)}
@@ -60,7 +62,7 @@ async function load(){
  $('#workspace-content').replaceChildren(node('p','Loading business records…','empty-state'));
  const result=await Promise.all([api.membership(organization.id,user.id),api.records('office_requests',organization.id),api.records('office_projects',organization.id),api.records('office_milestones',organization.id,'position.asc',500),api.records('office_deliverables',organization.id),api.records('office_updates',organization.id),api.packageAccess(organization.id).catch(()=>[])]);
  role=result[0][0]?.role;records={requests:result[1],projects:result[2],milestones:result[3],deliverables:result[4],updates:result[5],packageAccess:result[6]};
- $('#business-title').textContent=organization.name;$('#account-label').textContent=user.email+' · '+(role||'Member');$('#new-request').hidden=role==='viewer';render();
+ $('#business-title').textContent=organization.name;$('#account-label').textContent=user.email+' · '+(role||'Member');$('#new-request').hidden=role==='viewer';$('#order-services').hidden=role==='viewer';render();
 }
 function empty(text){return node('p',text,'empty-state')}
 function card(title){const el=node('article',undefined,'workspace-card');el.append(node('h2',title));return el}
@@ -77,9 +79,20 @@ function renderDeliverables(target){
  const list=node('div',undefined,'record-list');if(!records.deliverables.length)list.append(empty('No deliverables have been shared yet. Approved file and delivery links will appear here.'));
  records.deliverables.forEach(d=>{const c=card(d.label);const project=records.projects.find(p=>p.id===d.project_id);c.append(node('p',(project?.title||'Project')+' · '+date(d.created_at),'record-date'));if(d.notes)c.append(node('p',d.notes));const url=model.safeUrl(d.url);if(url){const a=node('a','Open deliverable ↗','delivery-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';c.append(a)}else c.append(node('p','This delivery link is unavailable. Please request an updated link.'));list.append(c)});target.append(list);
 }
+function renderCheckout(target){
+ const intro=card('Order services');intro.append(node('p','Choose departments or a framework, review the price and save your order. Your signed-in business is carried into checkout. A custom request is for work that needs a separate brief.'));target.append(intro);
+ const frame=node('iframe',undefined,'dashboard-checkout');frame.id='dashboard-checkout';frame.title='Select services, create an order and submit payment';frame.src='checkout.html?embed=1&business='+encodeURIComponent(organization.id)+(checkoutOrder?'&order='+encodeURIComponent(checkoutOrder):'');frame.style.height='1800px';target.append(frame);
+}
+async function renderOrders(target){
+ const orgId=organization.id;const heading=card('My orders');heading.append(node('p','Orders for '+organization.name+'. Submitted transaction hashes remain pending until the team verifies receipt.'));const start=node('button','Order a service +','dark');start.type='button';start.onclick=()=>{checkoutOrder=null;tab='shop';render()};heading.append(start);target.append(heading);const list=node('div',undefined,'record-list');list.append(empty('Loading your orders…'));target.append(list);
+ try{const rows=await api.orders(orgId);if(organization.id!==orgId||tab!=='orders')return;list.replaceChildren();if(!rows.length)list.append(empty('No service orders yet. Choose Order a service to select your package and checkout. Custom requests appear in their own section.'));
+ rows.forEach(o=>{const c=card(o.configuration.route==='owned'?'Framework order':'Managed office order');const status=o.status==='awaiting_payment'&&o.office_payment_submissions?.length?'Payment verification pending':o.status.replaceAll('_',' ');c.append(node('p',status,'status-pill'),node('p','Order '+o.id,'record-body'),node('p',date(o.created_at)+' · '+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(o.total_cents/100)+' total · '+(o.payment_method==='ac'?'AC Token':'USDT')),node('p',o.schedule==='installments'?'Four-payment schedule':'Full payment'));const view=node('button','View order & payment','outline');view.type='button';view.onclick=()=>{checkoutOrder=o.id;tab='shop';render()};c.append(view);list.append(c)});
+ }catch(e){if(organization.id===orgId&&tab==='orders'){list.replaceChildren(empty('Orders could not load: '+e.message));}}
+}
 function render(){
  const content=$('#workspace-content');content.replaceChildren();
  document.querySelectorAll('[data-tab]').forEach(b=>{if(b.dataset.tab===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ if(tab==='shop')return renderCheckout(content);if(tab==='orders')return renderOrders(content);
  if(tab==='requests')return renderRequests(content);if(tab==='projects')return renderProjects(content);if(tab==='deliverables')return renderDeliverables(content);
  if(tab==='office'||tab==='team'){
   const orgId=organization.id;
@@ -91,7 +104,7 @@ function render(){
 
  const sums=model.summary(records.requests,records.projects);const stats=node('div',undefined,'stat-grid');[['Open requests',sums.requests],['Active projects',sums.active],['Awaiting approval',sums.approvals]].forEach(([label,n])=>{const stat=node('article',undefined,'workspace-stat');stat.append(node('span',label),node('strong',String(n)));stats.append(stat)});content.append(stats);
  const grid=node('div',undefined,'workspace-grid');const next=card('Your next step');next.append(node('p',records.requests.length?'Use Requests to review your submitted briefs, and Projects for accepted work and milestones.':'Describe the first result you need. We will confirm scope before any work starts.'));const button=node('button','View requests ↗','link');button.onclick=()=>{tab='requests';render()};next.append(button);
- const updates=card('Office updates');if(!records.updates.length)updates.append(empty('No office updates yet. Confirmed progress and requests for information will appear here.'));records.updates.slice(0,10).forEach(u=>{updates.append(node('h3',u.title),node('p',u.body),node('p',date(u.created_at),'record-date'))});grid.append(next,updates);const welcome=card('Shape your office with your team');welcome.append(node('p','Choose departments and work allowances in My office, or let Amara guide your setup. Maya is your everyday coordinator.'));const configure=node('button','Design my office ↗','dark');configure.type='button';configure.onclick=()=>{tab='office';render()};const chat=node('button','Talk to Maya ↗','outline');chat.type='button';chat.onclick=()=>{window.OfficeWorkspace.selectAssistant('maya');tab='team';render()};welcome.append(configure,chat);content.append(welcome);content.append(grid,node('p','Showing up to the latest 200 records per section. Refresh to retrieve current status.','fine'));
+ const updates=card('Office updates');if(!records.updates.length)updates.append(empty('No office updates yet. Confirmed progress and requests for information will appear here.'));records.updates.slice(0,10).forEach(u=>{updates.append(node('h3',u.title),node('p',u.body),node('p',date(u.created_at),'record-date'))});grid.append(next,updates);const orderCard=card('Choose a service and place an order');orderCard.append(node('p','Select departments or a framework, review the total and payment schedule, then create your order. Use My orders to return to payment and track verification.'));const orderAction=node('button','Order services →','dark');orderAction.type='button';orderAction.onclick=()=>{checkoutOrder=null;tab='shop';render()};const historyAction=node('button','My orders ↗','outline');historyAction.type='button';historyAction.onclick=()=>{tab='orders';render()};orderCard.append(orderAction,historyAction);content.append(orderCard);const welcome=card('Shape your office with your team');welcome.append(node('p','Choose departments and work allowances in My office, or let Amara guide your setup. Maya is your everyday coordinator.'));const configure=node('button','Design my office ↗','dark');configure.type='button';configure.onclick=()=>{tab='office';render()};const chat=node('button','Talk to Maya ↗','outline');chat.type='button';chat.onclick=()=>{window.OfficeWorkspace.selectAssistant('maya');tab='team';render()};welcome.append(configure,chat);content.append(welcome);content.append(grid,node('p','Showing up to the latest 200 records per section. Refresh to retrieve current status.','fine'));
 }
 (async()=>{try{recovery=await api.callback();if(api.hasSession())await initialize();else show('auth-panel')}catch(e){show('auth-panel');notice(e.message)}})();
 })();
