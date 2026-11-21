@@ -8,7 +8,7 @@ Confirmed by the owner on 24 October 2026. These public accounts represent Agent
 - X: https://x.com/AgenticCoreHQ
 - Facebook: https://www.facebook.com/people/AgenticCore/61593981579304/
 - Instagram: https://www.instagram.com/agenticcore.agency
-- YouTube: https://www.youtube.com/@AgenticcoreAgency
+- YouTube: https://www.youtube.com/@agenticcoregroup
 - TikTok: https://www.tiktok.com/@agenticcore.agency
 - Telegram announcements: https://t.me/agenticCoreHQ
 
