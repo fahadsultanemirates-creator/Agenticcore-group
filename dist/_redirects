@@ -1,0 +1,9 @@
+# Clean URLs: .html aliases redirect permanently to the canonical address.
+/index.html      /           301!
+/services.html   /services   301!
+/payments.html   /payments   301!
+/checkout.html   /checkout   301!
+/workspace.html  /workspace  301!
+# Oversized PNGs were replaced with web-sized images.
+/assets/office.png  /assets/office.jpg   301
+/assets/team.png    /assets/team.webp    301

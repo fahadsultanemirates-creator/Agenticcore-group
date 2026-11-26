@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /workspace
+Disallow: /checkout
+Disallow: /api/
+
+Sitemap: https://agenticcore.group/sitemap.xml

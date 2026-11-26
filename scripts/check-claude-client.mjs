@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { createClaudeClient, toClaudeMessages } from '../netlify/lib/claude-client.mjs';
+let sent;
+const sdk={messages:{create:async args=>{sent=args;return {stop_reason:'end_turn',model:'claude-test',content:[{type:'text',text:'{"reply":"Hi","suggestion":{}}'}],usage:{input_tokens:10,output_tokens:5}}}}};
+const c=createClaudeClient({sdk});
+const r=await c.responses.create({model:'claude-test',instructions:'rules',max_output_tokens:100,input:[{role:'user',content:'ctx'},{role:'user',content:'q1'},{role:'assistant',content:'a1'},{role:'user',content:[{type:'input_text',text:'hello'},{type:'input_image',image_url:'data:image/png;base64,AAAA',detail:'auto'},{type:'input_file',filename:'a.pdf',file_data:'data:application/pdf;base64,BBBB'}]}],text:{format:{type:'json_schema',schema:{type:'object'}}}});
+assert.equal(r.status,'completed');assert.equal(r.output_text,'{"reply":"Hi","suggestion":{}}');assert.equal(r.usage.input_tokens,10);
+assert.equal(sent.system[0].text,'rules');assert.deepEqual(sent.output_config.format.schema,{type:'object'});
+assert.deepEqual(sent.messages.map(m=>m.role),['user','assistant','user']);
+assert.equal(sent.messages[2].content[1].type,'image');assert.equal(sent.messages[2].content[2].type,'document');
+assert.equal(toClaudeMessages([{role:'user',content:'x'}])[0].content[0].text,'x');
+console.log('Claude office chat adapter checks passed');

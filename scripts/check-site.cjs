@@ -14,7 +14,8 @@ for(const name of ['index.html','services.html','payments.html','checkout.html',
   if(/^(https?:|data:|mailto:|tel:)/.test(url)||url==='#')continue;
   const [rawPath,anchor]=url.split('#');const pathname=rawPath.split('?')[0];
   const target=pathname?path.resolve(url.startsWith('/')?dist:path.dirname(path.join(dist,name)),pathname.replace(/^\//,'')||'index.html'):path.join(dist,name);
-  const file=pathname==='/'?path.join(dist,'index.html'):target;
+  // Netlify serves clean URLs (/services) from the matching .html file.
+  const file=pathname==='/'?path.join(dist,'index.html'):(!fs.existsSync(target)&&fs.existsSync(target+'.html')?target+'.html':target);
   assert.ok(fs.existsSync(file),`Missing target ${url} in ${name}`);
   if(anchor){const content=file===path.join(dist,name)?page:fs.readFileSync(file,'utf8');assert.ok(content.includes('id="'+anchor+'"'),`Missing anchor ${url} in ${name}`)}
  }
